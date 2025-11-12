@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/shreyaskn72/devops_kubernets
+  repository: ghcr.io/shreyaskn72/hello-world-flask-kubernets
   tag: learning
   pullPolicy: IfNotPresent
 
