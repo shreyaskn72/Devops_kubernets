@@ -1,0 +1,6 @@
+1. To access the application, run:
+
+   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ include "flask-api.name" . }}" -o jsonpath="{.items[0].metadata.name}")
+   kubectl port-forward $POD_NAME 8080:{{ .Values.service.targetPort }}
+
+   Then open: http://127.0.0.1:8080
