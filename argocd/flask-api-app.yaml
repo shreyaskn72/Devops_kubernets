@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flask-api
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
+    targetRevision: master
+    path: flask_api/helm/flask-api
+
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flask-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
