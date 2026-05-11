@@ -1,4 +1,4 @@
-name: Build and Push to GHCR
+name: Build and Push backend to GHCR
 
 on:
   push:
@@ -6,11 +6,19 @@ on:
       - master
     tags:
       - 'v*'
-    paths-ignore:
-      - 'flask_api/helm/**'
+
+    paths:
+      - 'flask_api/**'
+      - '.github/workflows/publish.yml'
+
+concurrency:
+    group: backend-build
+    cancel-in-progress: true
+
+
 
 jobs:
-  build-and-push:
+  build-and-push-backend:
     runs-on: ubuntu-latest
 
     permissions:
@@ -48,7 +56,7 @@ jobs:
 
           echo "tag=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker image
+      - name: Build and push backend Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./flask_api
@@ -58,12 +66,12 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:${{ steps.version.outputs.tag }}
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:latest
 
-      - name: Update Helm values.yaml
+      - name: Update backend Helm values.yaml
         run: |
           sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
             flask_api/helm/flask-api/values.yaml
 
-      - name: Commit and push updated Helm values
+      - name: Commit and push updated backend Helm values
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
