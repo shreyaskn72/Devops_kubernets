@@ -81,4 +81,4 @@ Then open in your browser:
 
 
 
-If you want to manaully handle helm check this [helm_runbook.md](./helm_runbook.md)
+If you want to manually handle helm check this [helm_runbook.md](./helm_runbook.md)
