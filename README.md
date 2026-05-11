@@ -82,3 +82,41 @@ Then open in your browser:
 
 
 If you want to manually handle helm check this [helm_runbook.md](./helm_runbook.md)
+
+
+
+Similarly for frontend use the commands
+
+Inside argocd folder
+
+```bash
+kubectl apply -f react-frontend-app.yaml
+```
+
+### Port forward to access the React Frontend
+Check the actual service ports first:
+```bash
+kubectl get svc -n frontend-app
+```
+
+You will see something like this:
+```
+NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+react-frontend   ClusterIP   10.106.45.34   <none>        80/TCP    4m
+```
+In kubernetes
+```bash
+Service Port  -> Container Port
+80            -> 3000
+```
+
+So your port-forward should be:
+
+```bash
+kubectl port-forward svc/react-frontend 3000:80 -n frontend-app
+```
+
+Then open in your browser:
+👉 **[http://localhost:3000](http://localhost:3000)**
+
+
