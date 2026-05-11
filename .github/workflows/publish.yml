@@ -6,6 +6,8 @@ on:
       - master
     tags:
       - 'v*'
+    paths-ignore:
+      - 'flask_api/helm/**'
 
 jobs:
   build-and-push:
@@ -29,46 +31,45 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets
-          tags: |
-            type=ref,event=branch,suffix=-{{sha}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Generate short SHA
+        id: vars
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Generate image tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=master-${{ steps.vars.outputs.short_sha }}
+          fi
+
+          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./flask_api
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64,linux/arm64
-
-      - name: Extract version tag
-        id: version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION=master-$(git rev-parse --short HEAD)
-          fi
-          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:${{ steps.version.outputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:latest
 
       - name: Update Helm values.yaml
         run: |
           sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
             flask_api/helm/flask-api/values.yaml
 
-      - name: Commit and push updated values.yaml
+      - name: Commit and push updated Helm values
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add flask_api/helm/flask-api/values.yaml
-          git commit -m "chore: update image tag to ${{ steps.version.outputs.tag }}" || exit 0
-          git push
 
+          git add flask_api/helm/flask-api/values.yaml
+
+          git commit -m "chore: update image tag to ${{ steps.version.outputs.tag }}" || exit 0
+
+          git push
