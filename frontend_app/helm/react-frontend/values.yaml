@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/shreyaskn72/flask-react-frontend
-  tag: latest
+  tag: master-90f248c
   pullPolicy: Always
 
 service:
