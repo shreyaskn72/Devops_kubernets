@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: react-frontend
+  namespace: argocd
+  annotations:
+    deployedTag: latest
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
+    targetRevision: master
+    path: frontend_app/helm/react-frontend
+
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+

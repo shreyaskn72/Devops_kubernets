@@ -1,0 +1,76 @@
+name: Build and Push Frontend to GHCR
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+    paths:
+      - 'frontend_app/**'
+      - '.github/workflows/publish-frontend.yml'
+
+jobs:
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate short SHA
+        id: vars
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Generate image tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=master-${{ steps.vars.outputs.short_sha }}
+          fi
+          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend_app
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/flask-react-frontend:${{ steps.version.outputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/flask-react-frontend:latest
+
+      - name: Update Frontend Helm values
+        run: |
+          sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
+            frontend_app/helm/react-frontend/values.yaml
+
+      - name: Commit and push updated Frontend Helm values
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add frontend_app/helm/react-frontend/values.yaml
+
+          git commit -m "chore: update frontend image tag to ${{ steps.version.outputs.tag }}" || exit 0
+
+          git push
+
