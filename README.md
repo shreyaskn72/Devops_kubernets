@@ -40,7 +40,11 @@ admin
 ### Deploy Local Helm Chart Through ArgoCD
 
 
-Go inside `/argocd` and apply the ArgoCD application manifest:
+From repo's root directory.. Go inside `/argocd` folder by using 
+```bash
+cd argocd
+```
+Apply the ArgoCD application manifest:
 ```bash
 kubectl apply -f flask-api-app.yaml
 ```
