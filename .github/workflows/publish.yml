@@ -55,7 +55,7 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           else
-            VERSION=master-${{ github.sha }}
+            VERSION=master-$(git rev-parse --short HEAD)
           fi
           echo "tag=${VERSION}" >> $GITHUB_OUTPUT
 
