@@ -46,7 +46,7 @@ class User(db.Model):
 # Home endpoint
 @app.route("/")
 def hello():
-    return {"message": "Good morning from Shreyas K N! Welcome to CRUD API with MySQL"}
+    return {"message": "Good morning from Shreyas K N! Welcome to CRUD API with MySQL. Happy coding! All the best"}
 
 # Original greeting endpoint
 @app.route('/greeting')
