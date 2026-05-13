@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/shreyaskn72/hello-world-flask-kubernets
-  tag: master-cc98634
+  tag: test_sql
   pullPolicy: Always
 
 service:
@@ -20,5 +20,34 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+# Database Configuration
+# For Option 2 (Local MySQL): Set enabled to false
+# MySQL will NOT be deployed by Helm - use local Docker MySQL instead
+mysql:
+  enabled: false
+  auth:
+    rootPassword: rootpassword
+    database: flask_app
+    username: flask_user
+    password: flask_password
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+# Environment variables for Flask app
+# Option 2: Local MySQL running on Docker Desktop
+env:
+  - name: DB_HOST
+    value: "host.docker.internal"  # Special hostname for Docker Desktop to connect to localhost
+  - name: DB_PORT
+    value: "3306"
+  - name: DB_USER
+    value: flask_user
+  - name: DB_PASSWORD
+    value: "flask_password"  # Direct password value for local development
+  - name: DB_NAME
+    value: flask_app
 
 resources: {}

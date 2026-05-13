@@ -1,8 +1,38 @@
 version: "3.9"
 
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: flask_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: flask_app
+      MYSQL_USER: flask_user
+      MYSQL_PASSWORD: flask_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
   web:
     build: .
-    container_name: flask_hello
+    container_name: flask_api
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: flask_user
+      DB_PASSWORD: flask_password
+      DB_NAME: flask_app
     ports:
       - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
