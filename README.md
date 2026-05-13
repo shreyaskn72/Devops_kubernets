@@ -97,6 +97,26 @@ docker run --name local-mysql \
   mysql:8.0
 ```
 
+
+For persistent storage (so DB survives container deletions), you can use a Docker volume:
+```bash
+docker volume create mysql_data
+```
+
+Then start MySQL with the volume:
+```bash
+docker run -d \
+  --name local-mysql \
+  --restart unless-stopped \
+  -e MYSQL_ROOT_PASSWORD=rootpassword \
+  -e MYSQL_DATABASE=flask_app \
+  -e MYSQL_USER=flask_user \
+  -e MYSQL_PASSWORD=flask_password \
+  -p 3306:3306 \
+  -v mysql_data:/var/lib/mysql \
+  mysql:8.0
+```
+
 For more information check this [LOCAL_MYSQL_GUIDE.md](./LOCAL_MYSQL_GUIDE.md)
 
 
