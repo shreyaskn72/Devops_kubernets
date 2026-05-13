@@ -84,6 +84,21 @@ Then open in your browser:
 If you want to manually handle helm check this [helm_runbook.md](./helm_runbook.md)
 
 
+## Start mysql db locally in docker for desktop for development purpose
+
+```bash
+# Using Docker
+docker run --name local-mysql \
+  -e MYSQL_ROOT_PASSWORD=rootpassword \
+  -e MYSQL_DATABASE=flask_app \
+  -e MYSQL_USER=flask_user \
+  -e MYSQL_PASSWORD=flask_password \
+  -p 3306:3306 \
+  mysql:8.0
+```
+
+For more information check this [LOCAL_MYSQL_GUIDE.md](./LOCAL_MYSQL_GUIDE.md)
+
 
 Similarly for frontend use the commands
 
