@@ -3,7 +3,7 @@
 From the root of your repo:
 
 ```bash
-cd flask_api/helm/flask-api
+cd helm/flask-api
 ```
 
 ### Install the chart
