@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
     targetRevision: master
-    path: frontend_app/helm/react-frontend
+    path: helm/react-frontend
 
     helm:
       valueFiles:
