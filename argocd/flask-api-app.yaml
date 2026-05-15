@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
     targetRevision: master
-    path: flask_api/helm/flask-api
+    path: helm/flask-api
 
     helm:
       valueFiles:
