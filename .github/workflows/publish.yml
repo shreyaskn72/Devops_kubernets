@@ -69,14 +69,14 @@ jobs:
       - name: Update backend Helm values.yaml
         run: |
           sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
-            flask_api/helm/flask-api/values.yaml
+            helm/flask-api/values.yaml
 
       - name: Commit and push updated backend Helm values
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          git add flask_api/helm/flask-api/values.yaml
+          git add helm/flask-api/values.yaml
 
           git commit -m "chore: update image tag to ${{ steps.version.outputs.tag }}" || exit 0
 
