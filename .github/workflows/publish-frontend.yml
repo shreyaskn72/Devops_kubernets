@@ -92,14 +92,14 @@ jobs:
       - name: Update Frontend Helm values
         run: |
           sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
-            frontend_app/helm/react-frontend/values.yaml
+            helm/react-frontend/values.yaml
 
       - name: Commit and push updated Frontend Helm values
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          git add frontend_app/helm/react-frontend/values.yaml
+          git add helm/react-frontend/values.yaml
 
           git commit -m "chore: update frontend image tag to ${{ steps.version.outputs.tag }}" || exit 0
 
