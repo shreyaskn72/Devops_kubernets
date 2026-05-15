@@ -31,6 +31,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js (for updating lock file)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Update package-lock.json if needed
+        working-directory: ./frontend_app
+        run: |
+          npm install --package-lock-only
+
+      - name: Commit updated lock file if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if [ -n "$(git status --porcelain frontend_app/package-lock.json)" ]; then
+            git add frontend_app/package-lock.json
+            git commit -m "chore: update frontend package-lock.json"
+            git push
+          fi
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
