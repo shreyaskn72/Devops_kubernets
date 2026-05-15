@@ -3,6 +3,7 @@ import './App.css';
 import WelcomeSection from './components/WelcomeSection';
 import GreetingForm from './components/GreetingForm';
 import UserManager from './components/UserManager';
+import BulkUpload from './components/BulkUpload';
 
 function App() {
   const [activeSection, setActiveSection] = useState('home');
@@ -33,6 +34,12 @@ function App() {
           >
             👥 User CRUD
           </button>
+          <button
+            className={`nav-btn ${activeSection === 'bulk' ? 'active' : ''}`}
+            onClick={() => setActiveSection('bulk')}
+          >
+            📤 Bulk Upload
+          </button>
         </div>
 
         {/* Content Sections */}
@@ -40,6 +47,7 @@ function App() {
           {activeSection === 'home' && <WelcomeSection />}
           {activeSection === 'greeting' && <GreetingForm />}
           {activeSection === 'crud' && <UserManager />}
+          {activeSection === 'bulk' && <BulkUpload />}
         </div>
       </div>
     </div>

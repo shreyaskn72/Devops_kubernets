@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -16,6 +17,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
+
+# File upload configuration
+ALLOWED_EXTENSIONS = {'csv'}
+MAX_USERS_PER_UPLOAD = 10
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
 CORS(app)
@@ -173,6 +182,133 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+# BULK UPLOAD - Upload users from CSV file
+@app.route('/api/users/bulk-upload', methods=['POST'])
+def bulk_upload_users():
+    """
+    Bulk upload users from CSV file
+    CSV should have columns: name, city, email, age (optional)
+    Maximum 10 users per file
+    """
+    try:
+        # Check if file is in request
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Only CSV files are allowed'}), 400
+
+        # Check file size
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({'error': f'File size exceeds maximum of {MAX_FILE_SIZE / (1024*1024):.1f}MB'}), 413
+
+        # Read CSV file
+        try:
+            df = pd.read_csv(file)
+        except Exception as e:
+            return jsonify({'error': f'Invalid CSV format: {str(e)}'}), 400
+
+        # Validate number of rows
+        if len(df) == 0:
+            return jsonify({'error': 'CSV file is empty'}), 400
+
+        if len(df) > MAX_USERS_PER_UPLOAD:
+            return jsonify({
+                'error': f'CSV contains {len(df)} users. Maximum allowed is {MAX_USERS_PER_UPLOAD} users per upload.'
+            }), 413
+
+        # Validate required columns
+        required_columns = {'name', 'city', 'email'}
+        if not required_columns.issubset(df.columns):
+            return jsonify({
+                'error': f'CSV must contain columns: {", ".join(required_columns)}'
+            }), 400
+
+        # Process each row
+        users_to_add = []
+        failed_records = []
+
+        for index, row in df.iterrows():
+            try:
+                # Validate required fields
+                name = str(row['name']).strip() if pd.notna(row['name']) else None
+                city = str(row['city']).strip() if pd.notna(row['city']) else None
+                email = str(row['email']).strip() if pd.notna(row['email']) else None
+                age = int(row['age']) if 'age' in row and pd.notna(row['age']) else None
+
+                # Check for empty required fields
+                if not name or not city or not email:
+                    failed_records.append({
+                        'row': index + 2,
+                        'error': 'Missing required fields (name, city, email)'
+                    })
+                    continue
+
+                # Check if email already exists
+                if User.query.filter_by(email=email).first():
+                    failed_records.append({
+                        'row': index + 2,
+                        'error': f'Email "{email}" already exists'
+                    })
+                    continue
+
+                # Validate age
+                if age is not None and (age < 0 or age > 150):
+                    failed_records.append({
+                        'row': index + 2,
+                        'error': 'Age must be between 0 and 150'
+                    })
+                    continue
+
+                # Create user object (don't convert to dict yet)
+                user = User(
+                    name=name,
+                    city=city,
+                    email=email,
+                    age=age
+                )
+                db.session.add(user)
+                users_to_add.append(user)
+
+            except Exception as e:
+                failed_records.append({
+                    'row': index + 2,
+                    'error': str(e)
+                })
+                continue
+
+        # Commit all successful records
+        try:
+            db.session.commit()
+
+            # Convert users to dicts AFTER commit (timestamps will be set by database)
+            uploaded_users = [user.to_dict() for user in users_to_add]
+
+            return jsonify({
+                'message': f'Successfully uploaded {len(uploaded_users)} users',
+                'uploaded_count': len(uploaded_users),
+                'failed_count': len(failed_records),
+                'uploaded_users': uploaded_users,
+                'failed_records': failed_records if failed_records else []
+            }), 201
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Database error: {str(e)}'}), 500
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])

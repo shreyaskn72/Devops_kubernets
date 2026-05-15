@@ -85,6 +85,25 @@ const apiService = {
     }
   },
 
+  // BULK UPLOAD - Upload users from CSV file
+  bulkUploadUsers: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await axios.post(`${API_BASE_URL}/api/users/bulk-upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw error;
+    }
+  },
+
   // Health check
   checkHealth: async () => {
     try {
@@ -96,5 +115,6 @@ const apiService = {
   }
 };
 
-export default apiService;
+export { apiService as default };
+export const { bulkUploadUsers } = apiService;
 
