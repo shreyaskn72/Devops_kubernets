@@ -403,3 +403,12 @@ cache
 because Kubernetes internal DNS includes namespace.
 
 
+# For local testing of celery worker use the command below:
+```
+celery -A celery_app worker --loglevel=info
+```
+
+# For local testing of flower use the command below:
+```
+celery -A celery_app flower
+```
