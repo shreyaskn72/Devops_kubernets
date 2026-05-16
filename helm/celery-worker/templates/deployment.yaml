@@ -26,11 +26,11 @@ spec:
             - name: CELERY_RESULT_BACKEND
               value: {{ .Values.env.CELERY_RESULT_BACKEND | quote }}
             - name: DB_HOST
-              value: "mysql"
+              value: "host.docker.internal"
             - name: DB_USER
-              value: "root"
+              value: "flask_user"
             - name: DB_PASSWORD
-              value: "rootpassword"
+              value: "flask_password"
             - name: DB_NAME
               value: "flask_app"
           resources:
