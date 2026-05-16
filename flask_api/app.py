@@ -4,8 +4,17 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 import pandas as pd
+import io
+from celery_app import make_celery
+from tasks import process_bulk_upload
+
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+
+# Load environment variables from .env file FIRST
+load_dotenv()
 
 # Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = (
@@ -18,6 +27,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 
+app.config['CELERY_BROKER_URL'] = os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+app.config['CELERY_RESULT_BACKEND'] = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
 # File upload configuration
 ALLOWED_EXTENSIONS = {'csv'}
 MAX_USERS_PER_UPLOAD = 10
@@ -28,6 +40,8 @@ def allowed_file(filename):
 
 db = SQLAlchemy(app)
 CORS(app)
+celery = make_celery(app)
+
 
 # Database Models
 class User(db.Model):
@@ -51,6 +65,8 @@ class User(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+# Tasks are implemented in tasks.py and use independent DB connections; no init required here
 
 # Home endpoint
 @app.route("/")
@@ -183,16 +199,16 @@ def delete_user(user_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# BULK UPLOAD - Upload users from CSV file
+
+# BULK UPLOAD - Validate and Queue Task
 @app.route('/api/users/bulk-upload', methods=['POST'])
 def bulk_upload_users():
     """
-    Bulk upload users from CSV file
-    CSV should have columns: name, city, email, age (optional)
-    Maximum 10 users per file
+    Validate CSV and queue for background processing
+    Returns task ID for status tracking
     """
     try:
-        # Check if file is in request
+        # Validation
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
 
@@ -210,11 +226,12 @@ def bulk_upload_users():
         file.seek(0)
 
         if file_size > MAX_FILE_SIZE:
-            return jsonify({'error': f'File size exceeds maximum of {MAX_FILE_SIZE / (1024*1024):.1f}MB'}), 413
+            return jsonify({'error': f'File size exceeds maximum of {MAX_FILE_SIZE / (1024 * 1024):.1f}MB'}), 413
 
-        # Read CSV file
+        # Read and validate CSV
         try:
-            df = pd.read_csv(file)
+            file_data = file.read()
+            df = pd.read_csv(io.BytesIO(file_data))
         except Exception as e:
             return jsonify({'error': f'Invalid CSV format: {str(e)}'}), 400
 
@@ -234,81 +251,66 @@ def bulk_upload_users():
                 'error': f'CSV must contain columns: {", ".join(required_columns)}'
             }), 400
 
-        # Process each row
-        users_to_add = []
-        failed_records = []
+        # ✅ All validation passed - Queue the task
+        task = process_bulk_upload.delay(file_data, file.filename)
 
-        for index, row in df.iterrows():
-            try:
-                # Validate required fields
-                name = str(row['name']).strip() if pd.notna(row['name']) else None
-                city = str(row['city']).strip() if pd.notna(row['city']) else None
-                email = str(row['email']).strip() if pd.notna(row['email']) else None
-                age = int(row['age']) if 'age' in row and pd.notna(row['age']) else None
-
-                # Check for empty required fields
-                if not name or not city or not email:
-                    failed_records.append({
-                        'row': index + 2,
-                        'error': 'Missing required fields (name, city, email)'
-                    })
-                    continue
-
-                # Check if email already exists
-                if User.query.filter_by(email=email).first():
-                    failed_records.append({
-                        'row': index + 2,
-                        'error': f'Email "{email}" already exists'
-                    })
-                    continue
-
-                # Validate age
-                if age is not None and (age < 0 or age > 150):
-                    failed_records.append({
-                        'row': index + 2,
-                        'error': 'Age must be between 0 and 150'
-                    })
-                    continue
-
-                # Create user object (don't convert to dict yet)
-                user = User(
-                    name=name,
-                    city=city,
-                    email=email,
-                    age=age
-                )
-                db.session.add(user)
-                users_to_add.append(user)
-
-            except Exception as e:
-                failed_records.append({
-                    'row': index + 2,
-                    'error': str(e)
-                })
-                continue
-
-        # Commit all successful records
-        try:
-            db.session.commit()
-
-            # Convert users to dicts AFTER commit (timestamps will be set by database)
-            uploaded_users = [user.to_dict() for user in users_to_add]
-
-            return jsonify({
-                'message': f'Successfully uploaded {len(uploaded_users)} users',
-                'uploaded_count': len(uploaded_users),
-                'failed_count': len(failed_records),
-                'uploaded_users': uploaded_users,
-                'failed_records': failed_records if failed_records else []
-            }), 201
-
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': f'Database error: {str(e)}'}), 500
+        return jsonify({
+            'message': 'Bulk upload queued for processing',
+            'task_id': task.id,
+            'status': 'QUEUED',
+            'status_url': f'/api/users/bulk-upload/status/{task.id}'
+        }), 202
 
     except Exception as e:
-        db.session.rollback()
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+# GET UPLOAD STATUS
+@app.route('/api/users/bulk-upload/status/<task_id>', methods=['GET'])
+def get_upload_status(task_id):
+    """Get the status of a bulk upload task"""
+    try:
+        task_result = celery.AsyncResult(task_id)
+
+        if task_result.state == 'PENDING':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'PENDING',
+                'message': 'Task is queued and waiting to be processed'
+            }), 200
+
+        elif task_result.state == 'PROCESSING':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'PROCESSING',
+                'current': task_result.info.get('current', 0),
+                'total': task_result.info.get('total', 0),
+                'status': task_result.info.get('status', 'Processing...')
+            }), 200
+
+        elif task_result.state == 'SUCCESS':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'SUCCESS',
+                'result': task_result.result
+            }), 200
+
+        elif task_result.state == 'FAILURE':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'FAILURE',
+                'error': str(task_result.info)
+            }), 400
+
+        else:
+            return jsonify({
+                'task_id': task_id,
+                'state': task_result.state
+            }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Error fetching status: {str(e)}'}), 500
+
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])
