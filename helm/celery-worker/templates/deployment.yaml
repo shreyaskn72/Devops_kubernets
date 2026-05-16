@@ -18,7 +18,8 @@ spec:
         - name: celery
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["celery", "-A", "flask_api.celery_app.celery", "worker", "--loglevel=info"]
+          workingDir: /app
+          command: ["celery", "-A", "celery_app.celery", "worker", "--loglevel=info"]
           env:
             - name: CELERY_BROKER_URL
               value: {{ .Values.env.CELERY_BROKER_URL | quote }}
@@ -45,5 +46,3 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 20
       restartPolicy: Always
-
-
