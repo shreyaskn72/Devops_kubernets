@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/shreyaskn72/hello-world-flask-kubernets
+  tag: master-a70bc46
+  pullPolicy: Always
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  CELERY_BROKER_URL: "amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//"
+  CELERY_RESULT_BACKEND: "redis://redis-master.cache.svc.cluster.local:6379/0"
+
+rabbitmq:
+  user: rabbituser
+  password: rabbitpass
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+

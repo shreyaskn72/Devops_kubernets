@@ -50,4 +50,9 @@ env:
   - name: DB_NAME
     value: flask_app
 
+  - name: CELERY_BROKER_URL
+    value: "amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//"
+  - name: CELERY_RESULT_BACKEND
+    value: "redis://redis-master.cache.svc.cluster.local:6379/0"
+
 resources: {}

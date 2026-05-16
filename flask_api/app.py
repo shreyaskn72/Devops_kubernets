@@ -3,8 +3,18 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
+import pandas as pd
+import io
+from celery_app import make_celery
+from tasks import process_bulk_upload
+
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+
+# Load environment variables from .env file FIRST
+load_dotenv()
 
 # Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = (
@@ -17,8 +27,21 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 
+app.config['CELERY_BROKER_URL'] = os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+app.config['CELERY_RESULT_BACKEND'] = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
+# File upload configuration
+ALLOWED_EXTENSIONS = {'csv'}
+MAX_USERS_PER_UPLOAD = 10
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 db = SQLAlchemy(app)
 CORS(app)
+celery = make_celery(app)
+
 
 # Database Models
 class User(db.Model):
@@ -42,6 +65,8 @@ class User(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+# Tasks are implemented in tasks.py and use independent DB connections; no init required here
 
 # Home endpoint
 @app.route("/")
@@ -173,6 +198,119 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+# BULK UPLOAD - Validate and Queue Task
+@app.route('/api/users/bulk-upload', methods=['POST'])
+def bulk_upload_users():
+    """
+    Validate CSV and queue for background processing
+    Returns task ID for status tracking
+    """
+    try:
+        # Validation
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Only CSV files are allowed'}), 400
+
+        # Check file size
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({'error': f'File size exceeds maximum of {MAX_FILE_SIZE / (1024 * 1024):.1f}MB'}), 413
+
+        # Read and validate CSV
+        try:
+            file_data = file.read()
+            df = pd.read_csv(io.BytesIO(file_data))
+        except Exception as e:
+            return jsonify({'error': f'Invalid CSV format: {str(e)}'}), 400
+
+        # Validate number of rows
+        if len(df) == 0:
+            return jsonify({'error': 'CSV file is empty'}), 400
+
+        if len(df) > MAX_USERS_PER_UPLOAD:
+            return jsonify({
+                'error': f'CSV contains {len(df)} users. Maximum allowed is {MAX_USERS_PER_UPLOAD} users per upload.'
+            }), 413
+
+        # Validate required columns
+        required_columns = {'name', 'city', 'email'}
+        if not required_columns.issubset(df.columns):
+            return jsonify({
+                'error': f'CSV must contain columns: {", ".join(required_columns)}'
+            }), 400
+
+        # ✅ All validation passed - Queue the task
+        task = process_bulk_upload.delay(file_data, file.filename)
+
+        return jsonify({
+            'message': 'Bulk upload queued for processing',
+            'task_id': task.id,
+            'status': 'QUEUED',
+            'status_url': f'/api/users/bulk-upload/status/{task.id}'
+        }), 202
+
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+# GET UPLOAD STATUS
+@app.route('/api/users/bulk-upload/status/<task_id>', methods=['GET'])
+def get_upload_status(task_id):
+    """Get the status of a bulk upload task"""
+    try:
+        task_result = celery.AsyncResult(task_id)
+
+        if task_result.state == 'PENDING':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'PENDING',
+                'message': 'Task is queued and waiting to be processed'
+            }), 200
+
+        elif task_result.state == 'PROCESSING':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'PROCESSING',
+                'current': task_result.info.get('current', 0),
+                'total': task_result.info.get('total', 0),
+                'status': task_result.info.get('status', 'Processing...')
+            }), 200
+
+        elif task_result.state == 'SUCCESS':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'SUCCESS',
+                'result': task_result.result
+            }), 200
+
+        elif task_result.state == 'FAILURE':
+            return jsonify({
+                'task_id': task_id,
+                'state': 'FAILURE',
+                'error': str(task_result.info)
+            }), 400
+
+        else:
+            return jsonify({
+                'task_id': task_id,
+                'state': task_result.state
+            }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Error fetching status: {str(e)}'}), 500
+
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])
