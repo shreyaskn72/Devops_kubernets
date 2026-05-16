@@ -85,26 +85,39 @@ const apiService = {
     }
   },
 
-  // BULK UPLOAD - Upload users from CSV file
-  bulkUploadUsers: async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await axios.post(`${API_BASE_URL}/api/users/bulk-upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      return response.data;
-    } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        throw new Error(error.response.data.error);
-      }
-      throw error;
-    }
-  },
+   // BULK UPLOAD - Upload users from CSV file
+   bulkUploadUsers: async (file) => {
+     try {
+       const formData = new FormData();
+       formData.append('file', file);
+       const response = await axios.post(`${API_BASE_URL}/api/users/bulk-upload`, formData, {
+         headers: {
+           'Content-Type': 'multipart/form-data'
+         }
+       });
+       return response.data;
+     } catch (error) {
+       if (error.response && error.response.data && error.response.data.error) {
+         throw new Error(error.response.data.error);
+       }
+       throw error;
+     }
+   },
 
-  // Health check
+   // GET BULK UPLOAD STATUS - Check status of a bulk upload task
+   getBulkUploadStatus: async (taskId) => {
+     try {
+       const response = await axios.get(`${API_BASE_URL}/api/users/bulk-upload/status/${taskId}`);
+       return response.data;
+     } catch (error) {
+       if (error.response && error.response.data && error.response.data.error) {
+         throw new Error(error.response.data.error);
+       }
+       throw error;
+     }
+   },
+
+   // Health check
   checkHealth: async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/health`);
@@ -116,5 +129,5 @@ const apiService = {
 };
 
 export { apiService as default };
-export const { bulkUploadUsers } = apiService;
+export const { bulkUploadUsers, getBulkUploadStatus } = apiService;
 

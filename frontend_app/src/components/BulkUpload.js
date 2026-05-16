@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/BulkUpload.css';
-import { bulkUploadUsers } from '../services/apiService';
+import { bulkUploadUsers, getBulkUploadStatus } from '../services/apiService';
 
 function BulkUpload() {
   const [file, setFile] = useState(null);
@@ -8,6 +8,9 @@ function BulkUpload() {
   const [message, setMessage] = useState('');
   const [uploadResult, setUploadResult] = useState(null);
   const [showSample, setShowSample] = useState(false);
+  const [uploadHistory, setUploadHistory] = useState([]);
+  const [statusLoading, setStatusLoading] = useState({});
+  const [expandedTask, setExpandedTask] = useState(null);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -37,6 +40,17 @@ function BulkUpload() {
       const result = await bulkUploadUsers(file);
       setUploadResult(result);
       setMessage(`✅ ${result.message}`);
+
+      // Add to upload history
+      const newTask = {
+        task_id: result.task_id,
+        filename: file.name,
+        timestamp: new Date().toLocaleString(),
+        status: result.status,
+        result: null
+      };
+      setUploadHistory([newTask, ...uploadHistory]);
+
       setFile(null);
       document.getElementById('fileInput').value = '';
     } catch (error) {
@@ -44,6 +58,58 @@ function BulkUpload() {
       setUploadResult(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkTaskStatus = async (taskId, index) => {
+    setStatusLoading({ ...statusLoading, [taskId]: true });
+    try {
+      const statusResult = await getBulkUploadStatus(taskId);
+
+      // Update upload history with new status
+      const updatedHistory = [...uploadHistory];
+      updatedHistory[index] = {
+        ...updatedHistory[index],
+        status: statusResult.state,
+        result: statusResult
+      };
+      setUploadHistory(updatedHistory);
+
+      setExpandedTask(taskId);
+    } catch (error) {
+      alert(`❌ Error checking status: ${error.message}`);
+    } finally {
+      setStatusLoading({ ...statusLoading, [taskId]: false });
+    }
+  };
+
+  const getStatusColor = (state) => {
+    switch (state) {
+      case 'SUCCESS':
+        return '#27ae60';
+      case 'FAILURE':
+        return '#e74c3c';
+      case 'PROCESSING':
+        return '#f39c12';
+      case 'PENDING':
+        return '#3498db';
+      default:
+        return '#95a5a6';
+    }
+  };
+
+  const getStatusIcon = (state) => {
+    switch (state) {
+      case 'SUCCESS':
+        return '✅';
+      case 'FAILURE':
+        return '❌';
+      case 'PROCESSING':
+        return '⏳';
+      case 'PENDING':
+        return '⏱️';
+      default:
+        return '❓';
     }
   };
 
@@ -191,6 +257,91 @@ Mike Johnson,Chicago,mike@example.com,45`}
           <div className="result-summary">
             <p>📈 Total Processed: {uploadResult.uploaded_count + uploadResult.failed_count}</p>
             <p>✓ Success Rate: {((uploadResult.uploaded_count / (uploadResult.uploaded_count + uploadResult.failed_count)) * 100).toFixed(1)}%</p>
+          </div>
+        </div>
+      )}
+
+      {/* Upload History & Status Tracking */}
+      {uploadHistory.length > 0 && (
+        <div className="upload-history-container">
+          <h3>📋 Upload History & Status Tracker</h3>
+          <div className="upload-history-list">
+            {uploadHistory.map((task, index) => (
+              <div key={task.task_id} className="history-item">
+                <div className="history-header">
+                  <div className="history-info">
+                    <span className="status-badge" style={{ backgroundColor: getStatusColor(task.status) }}>
+                      {getStatusIcon(task.status)} {task.status}
+                    </span>
+                    <span className="task-id">ID: {task.task_id.substring(0, 8)}...</span>
+                    <span className="filename">📄 {task.filename}</span>
+                    <span className="timestamp">⏰ {task.timestamp}</span>
+                  </div>
+                  <div className="history-actions">
+                    <button
+                      className="status-check-btn"
+                      onClick={() => checkTaskStatus(task.task_id, index)}
+                      disabled={statusLoading[task.task_id]}
+                    >
+                      {statusLoading[task.task_id] ? '🔄 Checking...' : '🔍 Check Status'}
+                    </button>
+                    <button
+                      className="expand-btn"
+                      onClick={() => setExpandedTask(expandedTask === task.task_id ? null : task.task_id)}
+                    >
+                      {expandedTask === task.task_id ? '▲' : '▼'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Status Details */}
+                {expandedTask === task.task_id && task.result && (
+                  <div className="history-details">
+                    <div className="status-details">
+                      <p><strong>State:</strong> {task.result.state}</p>
+                      {task.result.state === 'PROCESSING' && (
+                        <div className="progress-info">
+                          <p><strong>Progress:</strong> {task.result.current} / {task.result.total}</p>
+                          <div className="progress-bar">
+                            <div
+                              className="progress-fill"
+                              style={{ width: `${(task.result.current / task.result.total) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                      {task.result.state === 'SUCCESS' && (
+                        <div className="success-details">
+                          <p>✅ <strong>Message:</strong> {task.result.result.message}</p>
+                          <p>📤 <strong>Uploaded:</strong> {task.result.result.uploaded_count}</p>
+                          <p>❌ <strong>Failed:</strong> {task.result.result.failed_count}</p>
+                          {task.result.result.failed_count > 0 && (
+                            <div className="failed-details">
+                              <p><strong>Failed Records:</strong></p>
+                              {task.result.result.failed_records.map((record, idx) => (
+                                <div key={idx} className="failed-record">
+                                  Row {record.row}: {record.error}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {task.result.state === 'FAILURE' && (
+                        <div className="failure-details">
+                          <p>❌ <strong>Error:</strong> {task.result.error}</p>
+                        </div>
+                      )}
+                      {task.result.state === 'PENDING' && (
+                        <div className="pending-details">
+                          <p>⏱️ {task.result.message}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
