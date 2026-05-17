@@ -42,7 +42,19 @@ spec:
               cpu: {{ .Values.resources.limits.cpu }}
           livenessProbe:
             exec:
-              command: ["/bin/sh", "-c", "ps aux | grep '[c]elery' || exit 1"]
+              command:
+                - /bin/sh
+                - -c
+                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
             initialDelaySeconds: 30
             periodSeconds: 20
       restartPolicy: Always
