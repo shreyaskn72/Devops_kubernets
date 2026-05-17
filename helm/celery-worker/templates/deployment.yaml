@@ -18,18 +18,19 @@ spec:
         - name: celery
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["celery", "-A", "flask_api.celery_app.celery", "worker", "--loglevel=info"]
+          workingDir: /app
+          command: ["celery", "-A", "celery_app.celery", "worker", "--loglevel=info"]
           env:
             - name: CELERY_BROKER_URL
               value: {{ .Values.env.CELERY_BROKER_URL | quote }}
             - name: CELERY_RESULT_BACKEND
               value: {{ .Values.env.CELERY_RESULT_BACKEND | quote }}
             - name: DB_HOST
-              value: "mysql"
+              value: "host.docker.internal"
             - name: DB_USER
-              value: "root"
+              value: "flask_user"
             - name: DB_PASSWORD
-              value: "rootpassword"
+              value: "flask_password"
             - name: DB_NAME
               value: "flask_app"
           resources:
@@ -41,9 +42,19 @@ spec:
               cpu: {{ .Values.resources.limits.cpu }}
           livenessProbe:
             exec:
-              command: ["/bin/sh", "-c", "ps aux | grep '[c]elery' || exit 1"]
+              command:
+                - /bin/sh
+                - -c
+                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
             initialDelaySeconds: 30
             periodSeconds: 20
       restartPolicy: Always
-
-
