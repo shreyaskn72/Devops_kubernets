@@ -412,3 +412,8 @@ celery -A celery_app worker --loglevel=info
 ```
 celery -A celery_app flower
 ```
+
+# Port forward flower for visibility
+```
+kubectl port-forward svc/flower-service 5555:5555 -n flower
+```
