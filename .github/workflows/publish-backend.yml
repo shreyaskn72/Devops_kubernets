@@ -66,6 +66,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:${{ steps.version.outputs.tag }}
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:latest
 
+      # Update helm values for flask-api, celery-worker, celery-beat, flower
       - name: Update Helm values.yaml files
         run: |
           TAG=${{ steps.version.outputs.tag }}
