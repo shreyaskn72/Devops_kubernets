@@ -4,60 +4,83 @@ metadata:
   name: {{ include "celery-beat.fullname" . | default "celery-beat" }}
   labels:
     app: celery-beat
+
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1   # IMPORTANT: only one beat instance
   selector:
     matchLabels:
       app: celery-beat
+
   template:
     metadata:
       labels:
         app: celery-beat
+
     spec:
       containers:
-        - name: celery
+        - name: celery-beat
+
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+
           workingDir: /app
-          command: ["celery", "-A", "celery_app.celery", "beat", "--loglevel=info"]
+
+          command:
+            [
+              "celery",
+              "-A",
+              "celery_app.celery",
+              "beat",
+              "--loglevel=info"
+            ]
+
           env:
             - name: CELERY_BROKER_URL
               value: {{ .Values.env.CELERY_BROKER_URL | quote }}
+
             - name: CELERY_RESULT_BACKEND
               value: {{ .Values.env.CELERY_RESULT_BACKEND | quote }}
+
             - name: DB_HOST
               value: "host.docker.internal"
+
             - name: DB_USER
               value: "flask_user"
+
             - name: DB_PASSWORD
               value: "flask_password"
+
             - name: DB_NAME
               value: "flask_app"
+
           resources:
             requests:
               memory: {{ .Values.resources.requests.memory }}
               cpu: {{ .Values.resources.requests.cpu }}
+
             limits:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
+
+          # Simple process health check
           livenessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
-            initialDelaySeconds: 60
+                - pgrep -f "celery beat"
+
+            initialDelaySeconds: 30
             periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 5
+
           readinessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping -d celery@$(hostname)
-            initialDelaySeconds: 60
-            periodSeconds: 60
-            timeoutSeconds: 10
-            failureThreshold: 5
+                - pgrep -f "celery beat"
+
+            initialDelaySeconds: 15
+            periodSeconds: 30
+
       restartPolicy: Always
