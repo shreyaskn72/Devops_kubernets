@@ -1,93 +1,251 @@
-## Install argocd
+
+# Kubernetes Flask + Celery Platform
+
+Production-style Flask + Celery application deployed on Kubernetes using:
+
+- Flask API
+- React Frontend
+- Celery Worker
+- Celery Beat
+- Flower
+- RabbitMQ
+- Redis
+- Helm
+- ArgoCD
+- GitHub Actions
+
+---
+
+# Architecture Overview
+
+```text
+React Frontend
+       ↓
+Flask API
+       ↓
+RabbitMQ / Redis
+       ↓
+Celery Workers
+       ↓
+MySQL
+
+
+---
+
+# Repository Structure
+
+```text
+project/
+├── argocd/
+├── flask_api/
+├── frontend/
+├── helm/
+│   ├── flask-api/
+│   ├── celery-worker/
+│   ├── celery-beat/
+│   ├── flower/
+│   ├── values-rabbitmq.yaml
+│   └── values-redis.yaml
+```
+
+---
+
+# Namespaces Used
+
+| Namespace     | Purpose           |
+|---------------|-------------------|
+| argocd        | ArgoCD GitOps     |
+| flask-app     | Flask backend     |
+| frontend-app  | React frontend    |
+| messaging     | RabbitMQ          |
+| cache         | Redis             |
+| flower        | Flower monitoring |
+| celery-worker | celery-worker     |
+| celery-beat   | celery-beat       |
+
+---
+
+# Prerequisites
+
+Ensure the following are installed locally:
+
+* Docker Desktop
+* Kubernetes enabled in Docker Desktop
+* kubectl
+* Helm
+* Git
+
+---
+
+# Install ArgoCD
+
+## Create Namespace
+
 ```bash
 kubectl create namespace argocd
+```
 
+---
+
+## Install ArgoCD
+
+```bash
 kubectl apply -n argocd \
   -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-```  
+```
 
-### check argocd pods
+---
+
+## Verify Pods
+
 ```bash
 kubectl get pods -n argocd
 ```
+
 All pods should be in `Running` state.
 
+---
 
+## Access ArgoCD UI
 
-
-### Access the ArgoCD UI
-
-port forward
+Port forward the ArgoCD server:
 
 ```bash
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
-Then open in your browser:
-👉 **[http://localhost:8080](http://localhost:8080)**
+Open in browser:
 
+```text
+http://localhost:8080
+```
 
-Get admin password
+---
+
+## Retrieve Admin Password
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-```
-Username
-```
-admin
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d
 ```
 
-### Deploy Local Helm Chart Through ArgoCD
+### Login Credentials
 
+```text
+Username: admin
+Password: <output-from-command>
+```
 
-From repo's root directory.. Go inside `/argocd` folder by using 
+---
+
+# Deploy Flask API Through ArgoCD
+
+## Navigate to ArgoCD Manifests
+
 ```bash
 cd argocd
 ```
-Apply the ArgoCD application manifest:
+
+---
+
+## Apply Flask API Application
+
 ```bash
 kubectl apply -f flask-api-app.yaml
 ```
 
+---
 
+## Verify Service
 
-### Port forward to access the Flask API
-
-Check the actual service ports first:
 ```bash
 kubectl get svc -n flask-app
 ```
-You will see something like this:
-```
-NAME                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
-flask-api-flask-api   ClusterIP   10.107.228.211   <none>        80/TCP    2m37s
+
+Example:
+
+```text
+NAME                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)
+flask-api-flask-api   ClusterIP   10.107.228.211   <none>        80/TCP
 ```
 
-In kubernetes
-```bash
-Service Port  -> Container Port
-80            -> 5000
-```
-So your container listens on 5000, but the Service exposes 80.
+---
 
-That means your port-forward should be:
+## Port Forward Flask API
+
+> NOTE:
+> Kubernetes Service Port and Container Port are different.
+
+```text
+Service Port    →    Container Port
+80              →    5000
+```
+
+Port forward:
 
 ```bash
 kubectl port-forward svc/flask-api-flask-api 5000:80 -n flask-app
 ```
 
-Then open in your browser:
-👉 **[http://localhost:5000](http://localhost:5000)**
+Access API:
 
+```text
+http://localhost:5000
+```
 
+---
 
-If you want to manually handle helm check this [helm_runbook.md](./helm_runbook.md)
+# Deploy React Frontend Through ArgoCD
 
-
-## Start mysql db locally in docker for desktop for development purpose
+## Apply Frontend Application
 
 ```bash
-# Using Docker
+kubectl apply -f react-frontend-app.yaml
+```
+
+---
+
+## Verify Frontend Service
+
+```bash
+kubectl get svc -n frontend-app
+```
+
+Example:
+
+```text
+NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)
+react-frontend   ClusterIP   10.106.45.34   <none>        80/TCP
+```
+
+---
+
+## Port Forward React Frontend
+
+```text
+Service Port    →    Container Port
+80              →    3000
+```
+
+Port forward:
+
+```bash
+kubectl port-forward svc/react-frontend 3000:80 -n frontend-app
+```
+
+Access frontend:
+
+```text
+http://localhost:3000
+```
+
+---
+
+# Local MySQL Setup (Development Only)
+
+## Start MySQL Container
+
+```bash
 docker run --name local-mysql \
   -e MYSQL_ROOT_PASSWORD=rootpassword \
   -e MYSQL_DATABASE=flask_app \
@@ -97,13 +255,18 @@ docker run --name local-mysql \
   mysql:8.0
 ```
 
+---
 
-For persistent storage (so DB survives container deletions), you can use a Docker volume:
+## Persistent MySQL Storage
+
+Create Docker volume:
+
 ```bash
 docker volume create mysql_data
 ```
 
-Then start MySQL with the volume:
+Run MySQL with persistence:
+
 ```bash
 docker run -d \
   --name local-mysql \
@@ -117,176 +280,126 @@ docker run -d \
   mysql:8.0
 ```
 
-For more information check this [LOCAL_MYSQL_GUIDE.md](./LOCAL_MYSQL_GUIDE.md)
+Additional details:
 
+[LOCAL_MYSQL_GUIDE.md](./LOCAL_MYSQL_GUIDE.md)
 
-Similarly for frontend use the commands
+---
 
-Inside argocd folder
+# RabbitMQ Setup
 
-```bash
-kubectl apply -f react-frontend-app.yaml
-```
-
-### Port forward to access the React Frontend
-Check the actual service ports first:
-```bash
-kubectl get svc -n frontend-app
-```
-
-You will see something like this:
-```
-NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-react-frontend   ClusterIP   10.106.45.34   <none>        80/TCP    4m
-```
-In kubernetes
-```bash
-Service Port  -> Container Port
-80            -> 3000
-```
-
-So your port-forward should be:
+## Create Namespace
 
 ```bash
-kubectl port-forward svc/react-frontend 3000:80 -n frontend-app
-```
-
-Then open in your browser:
-👉 **[http://localhost:3000](http://localhost:3000)**
-
-
-# For configuring rabbitmq manually use the instructions below:
-
-
-## STEP 1 — Create namespace called messaging
-
-```bash
-kubectl create ns messaging
+kubectl create namespace messaging
 ```
 
 ---
 
-## STEP 2 — apply values-rabbitmq.yaml
+## Navigate to Helm Directory
 
-From root directory go inside helm folder
 ```bash
 cd helm
 ```
-Then apply values in values-rabbitmq.yaml
+
+---
+
+## Apply RabbitMQ Configuration
+
 ```bash
 kubectl apply -f values-rabbitmq.yaml
 ```
+
 ---
 
-## STEP 3 — Verify if pods are running
+## Verify RabbitMQ Pods
 
 ```bash
 kubectl get pods -n messaging -w
 ```
 
-It should show something like this
-```bash
-NAME                       READY   STATUS    RESTARTS   AGE
-rabbitmq-5fdf77b4d-tkd64   1/1     Running   0          9s
+Expected:
+
+```text
+rabbitmq-xxxxx   1/1 Running
 ```
 
-Observe status should be in Running state
 ---
 
-## STEP 4: Check the por tof service
+## Verify RabbitMQ Service
+
 ```bash
 kubectl get svc -n messaging
 ```
 
-It should show something like this:
-```bash
-NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)              AGE
-rabbitmq   ClusterIP   10.109.217.252   <none>        5672/TCP,15672/TCP   73s
+Expected:
+
+```text
+rabbitmq   ClusterIP   xxx.xxx.xxx.xxx   5672/TCP,15672/TCP
 ```
-Note down the port
 
-## STEP 5 — Access Rabbitmq UI
+---
 
-```bash id
+## Access RabbitMQ UI
+
+Port forward:
+
+```bash
 kubectl port-forward svc/rabbitmq 15672:15672 -n messaging
 ```
 
 Open:
 
-```text id="jlwm0i"
+```text
 http://localhost:15672
 ```
 
 Login:
 
-```text id="jlwm1j"
-rabbituser
-rabbitpass
+```text
+Username: rabbituser
+Password: rabbitpass
 ```
-
-## Rabbitmq Inside Kubernetes
-
-Use this connection string from your Flask/Celery apps:
-```
-amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//
-```
-
-## For local running of api and flask-app
-
-First port forward:
-```
-kubectl port-forward svc/rabbitmq 5672:5672 -n messaging
-```
-Then Use Connection String:
-```
-broker="amqp://rabbituser:rabbitpass@localhost:5672//"
-```
-
 
 ---
 
+## RabbitMQ Connection String (Inside Kubernetes)
 
-## In production You Can Upgrade To
+```text
+amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//
+```
 
-* StatefulSet
-* persistence
-* HA queues
-* RabbitMQ clustering
-* operators
-* Bitnami chart
-* RabbitMQ cluster operator
+---
 
-But FIRST get:
+## RabbitMQ Connection String (Local Development)
 
-* RabbitMQ
-* Celery
-* Celery Beat
-* Flower
+Port forward:
 
-working end-to-end.
+```bash
+kubectl port-forward svc/rabbitmq 5672:5672 -n messaging
+```
 
+Connection string:
 
+```text
+amqp://rabbituser:rabbitpass@localhost:5672//
+```
 
+---
 
-# To install redis manually use the steps below
+# Redis Setup
 
 ## Create Namespace
 
-```bash id="3r8f6d"
+```bash
 kubectl create namespace cache
 ```
 
 ---
 
-## Add Helm Repo
+## Add Bitnami Helm Repository
 
-From root directory go inside helm folder where values-redis.yaml resides
 ```bash
-cd helm
-```
-
-
-```bash id="9czq2k"
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
 helm repo update
@@ -296,7 +409,7 @@ helm repo update
 
 ## Install Redis
 
-```bash id="2kj8qf"
+```bash
 helm install redis bitnami/redis \
   -n cache \
   -f values-redis.yaml
@@ -304,43 +417,43 @@ helm install redis bitnami/redis \
 
 ---
 
-## Verify Pods
+## Verify Redis Pods
 
-```bash id="l3tt4w"
+```bash
 kubectl get pods -n cache
 ```
 
 Expected:
 
-```text id="6f7g1n"
+```text
 redis-master-0   1/1 Running
 ```
 
 ---
 
-## Verify PVC
+## Verify Persistent Volume Claims
 
-```bash id="2okfwd"
+```bash
 kubectl get pvc -n cache
 ```
 
 Expected:
 
-```text id="dylr77"
+```text
 STATUS: Bound
 ```
 
 ---
 
-## Verify Services
+## Verify Redis Services
 
-```bash id="wwt5u6"
+```bash
 kubectl get svc -n cache
 ```
 
-You should see:
+Expected:
 
-```text id="jlwmrs"
+```text
 redis-master
 redis-headless
 ```
@@ -349,101 +462,191 @@ redis-headless
 
 ## Test Redis
 
-```bash id="wz9gl9"
+```bash
 kubectl exec -it redis-master-0 -n cache -- redis-cli
 ```
 
-Then:
+Inside Redis CLI:
 
-```bash id="jlwmrt"
+```bash
 PING
 ```
 
 Expected:
 
-```text id="jlwmru"
+```text
 PONG
 ```
 
-Exit:
+Exit Redis CLI:
 
-```bash id="jlwmrv"
+```bash
 exit
 ```
 
 ---
 
-## Redis URL Inside Kubernetes
+## Redis Connection String (Inside Kubernetes)
 
-Use this connection string from your Flask/Celery apps:
-
-```text id="jlwmrw"
+```text
 redis://redis-master.cache.svc.cluster.local:6379/0
 ```
 
+---
 
-## For local testing
+## Redis Connection String (Local Development)
 
-First port forward using the command:
-```
+Port forward:
+
+```bash
 kubectl port-forward svc/redis-master 6379:6379 -n cache
 ```
 
-Then use the connection string:
-```
+Connection string:
+
+```text
 redis://localhost:6379/0
 ```
 
-Note redis resides in this namespace
+---
 
-```text id="jlwmry"
-cache
-```
+# Deploy Celery Components Through ArgoCD
 
-because Kubernetes internal DNS includes namespace.
+## Navigate to ArgoCD Directory
 
-# Deploy Local Helm Chart of celery worker, celery beat, flower Through ArgoCD
-
-From repo's root directory.. Go inside `/argocd` folder by using 
 ```bash
 cd argocd
 ```
-Apply the ArgoCD application manifest:
+
+---
+
+## Deploy Celery Worker
+
 ```bash
 kubectl apply -f celery-worker.yaml
 ```
 
-No port forward is necessary for clery worker as its called internally.
+> NOTE:
+> Celery Worker runs internally and does not require port forwarding.
 
-Similarly apply for clery-beat.yaml
+---
+
+## Deploy Celery Beat
+
 ```bash
 kubectl apply -f celery-beat.yaml
 ```
 
-For flower apply:
+---
+
+## Deploy Flower
 
 ```bash
 kubectl apply -f flower.yaml
 ```
 
-For flower visibility port forward flower service
-```
+---
+
+## Access Flower UI
+
+Port forward:
+
+```bash
 kubectl port-forward svc/flower-service 5555:5555 -n flower
 ```
 
+Open:
 
-# For local testing of celery worker use the command below:
+```text
+http://localhost:5555
 ```
+
+---
+
+# Local Development Commands
+
+## Run Celery Worker Locally
+
+```bash
 celery -A celery_app worker --loglevel=info
 ```
 
-# For local testing of flower use the command below:
-```
+---
+
+## Run Flower Locally
+
+```bash
 celery -A celery_app flower
 ```
 
-# Port forward flower for visibility
-```
-kubectl port-forward svc/flower-service 5555:5555 -n flower
+---
+
+# Useful Kubernetes Commands
+
+## View All Pods
+
+```bash
+kubectl get pods --all-namespaces
 ```
 
+---
+
+## View Logs
+
+```bash
+kubectl logs <pod-name> -n <namespace>
+```
+
+---
+
+## Restart Deployment
+
+```bash
+kubectl rollout restart deployment <deployment-name> -n <namespace>
+```
+
+---
+
+## Check Services
+
+```bash
+kubectl get svc -A
+```
+
+---
+
+## Check ArgoCD Applications
+
+```bash
+kubectl get applications -n argocd
+```
+
+---
+
+# Production Improvements
+
+Future improvements for AKS production deployments:
+
+* Ingress Controller
+* HTTPS / TLS
+* Azure Key Vault
+* HPA Autoscaling
+* Prometheus + Grafana
+* StatefulSets
+* Persistent Volumes
+* Azure Database for MySQL/PostgreSQL
+* Azure Cache for Redis
+* RabbitMQ Clustering
+* Network Policies
+* OpenTelemetry
+* CI/CD Security Scanning
+
+---
+
+# Additional Documentation
+
+* [helm_runbook.md](./helm_runbook.md)
+* [LOCAL_MYSQL_GUIDE.md](./LOCAL_MYSQL_GUIDE.md)
+
+```
+```
