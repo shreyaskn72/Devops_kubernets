@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/shreyaskn72/hello-world-flask-kubernets
-  tag: master-fd3997d
+  tag: master-e47e670
   pullPolicy: Always
 
 service:
