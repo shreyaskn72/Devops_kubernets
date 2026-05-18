@@ -402,6 +402,35 @@ cache
 
 because Kubernetes internal DNS includes namespace.
 
+# Deploy Local Helm Chart of celery worker, celery beat, flower Through ArgoCD
+
+From repo's root directory.. Go inside `/argocd` folder by using 
+```bash
+cd argocd
+```
+Apply the ArgoCD application manifest:
+```bash
+kubectl apply -f celery-worker.yaml
+```
+
+No port forward is necessary for clery worker as its called internally.
+
+Similarly apply for clery-beat.yaml
+```bash
+kubectl apply -f celery-beat.yaml
+```
+
+For flower apply:
+
+```bash
+kubectl apply -f flower.yaml
+```
+
+For flower visibility port forward flower service
+```
+kubectl port-forward svc/flower-service 5555:5555 -n flower
+```
+
 
 # For local testing of celery worker use the command below:
 ```
@@ -417,3 +446,4 @@ celery -A celery_app flower
 ```
 kubectl port-forward svc/flower-service 5555:5555 -n flower
 ```
+
