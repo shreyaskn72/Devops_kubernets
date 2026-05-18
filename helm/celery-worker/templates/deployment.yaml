@@ -45,7 +45,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping -d celery@$(hostname) | grep pong
+                - celery -A celery_app.celery inspect ping | grep pong
 
             initialDelaySeconds: 60
             periodSeconds: 30
@@ -57,7 +57,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping -d celery@$(hostname) | grep pong
+                - celery -A celery_app.celery inspect ping | grep pong
 
             initialDelaySeconds: 60
             periodSeconds: 60
