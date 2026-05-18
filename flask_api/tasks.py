@@ -95,34 +95,69 @@ from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
 
 
+BATCH_SIZE = 1000
+
+
 @celery.task(bind=True, name="delete_old_users")
 def delete_old_users(self):
-    """
-    Delete users older than 1 year.
-    """
 
     session = Session()
 
+    total_deleted = 0
+    deleted_users = []
+
     try:
+
         one_year_ago = datetime.utcnow() - timedelta(days=365)
 
-        deleted_count = (
-            session.query(User)
-            .filter(User.created_at < one_year_ago)
-            .delete(synchronize_session=False)
-        )
+        while True:
 
-        session.commit()
+            users = (
+                session.query(User)
+                .filter(User.created_at < one_year_ago)
+                .limit(BATCH_SIZE)
+                .all()
+            )
+
+            if not users:
+                break
+
+            batch_deleted = []
+
+            for user in users:
+
+                batch_deleted.append({
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "city": user.city,
+                    "created_at": user.created_at.isoformat()
+                })
+
+                session.delete(user)
+
+            session.commit()
+
+            deleted_users.extend(batch_deleted)
+
+            total_deleted += len(batch_deleted)
 
         return {
             "task_id": self.request.id,
             "status": "success",
-            "deleted_users": deleted_count,
+            "total_deleted": total_deleted,
+            "deleted_users": deleted_users
         }
 
     except SQLAlchemyError as exc:
+
         session.rollback()
-        raise self.retry(exc=exc, countdown=60, max_retries=3)
+
+        raise self.retry(
+            exc=exc,
+            countdown=60,
+            max_retries=3
+        )
 
     finally:
         session.close()
