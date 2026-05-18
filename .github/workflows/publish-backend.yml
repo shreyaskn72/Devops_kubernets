@@ -9,7 +9,7 @@ on:
 
     paths:
       - 'flask_api/**'
-      - '.github/workflows/publish.yml'
+      - '.github/workflows/publish-backend.yml'
 
 concurrency:
     group: backend-build
@@ -66,17 +66,26 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:${{ steps.version.outputs.tag }}
             ghcr.io/${{ github.repository_owner }}/hello-world-flask-kubernets:latest
 
-      - name: Update backend Helm values.yaml
+      # Update helm values for flask-api, celery-worker, celery-beat, flower
+      - name: Update Helm values.yaml files
         run: |
-          sed -i "s/tag: .*/tag: ${{ steps.version.outputs.tag }}/" \
-            helm/flask-api/values.yaml
+          TAG=${{ steps.version.outputs.tag }}
 
-      - name: Commit and push updated backend Helm values
+          for chart in flask-api celery-worker celery-beat flower
+          do
+            sed -i "s/tag: .*/tag: ${TAG}/" helm/${chart}/values.yaml
+          done
+
+      - name: Commit and push updated Helm values
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          git add helm/flask-api/values.yaml
+          git add \
+            helm/flask-api/values.yaml \
+            helm/celery-worker/values.yaml \
+            helm/celery-beat/values.yaml \
+            helm/flower/values.yaml
 
           git commit -m "chore: update image tag to ${{ steps.version.outputs.tag }}" || exit 0
 
