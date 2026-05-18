@@ -1,0 +1,7 @@
+apiVersion: v2
+name: celery-beat
+description: Celery beat chart for cronjob
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
