@@ -31,7 +31,8 @@ spec:
               "-A",
               "celery_app.celery",
               "beat",
-              "--loglevel=info"
+              "--loglevel=info",
+              "--pidfile=/tmp/celerybeat.pid"
             ]
 
           env:
@@ -68,7 +69,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - pgrep -f "celery beat"
+                - test -f /tmp/celerybeat.pid
 
             initialDelaySeconds: 30
             periodSeconds: 30
@@ -78,7 +79,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - pgrep -f "celery beat"
+                - test -f /tmp/celerybeat.pid
 
             initialDelaySeconds: 15
             periodSeconds: 30
