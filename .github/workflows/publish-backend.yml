@@ -9,7 +9,7 @@ on:
 
     paths:
       - 'flask_api/**'
-      - '.github/workflows/publish.yml'
+      - '.github/workflows/publish-backend.yml'
 
 concurrency:
     group: backend-build
