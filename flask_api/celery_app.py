@@ -17,7 +17,7 @@ celery.autodiscover_tasks(['tasks'])
 
 # Import tasks to register them with Celery
 import tasks
-
+import beat_schedule
 
 def make_celery(app):
     """Attach Flask app context to Celery tasks by setting a ContextTask."""
