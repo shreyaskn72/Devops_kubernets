@@ -93,7 +93,7 @@ def process_bulk_upload(self, file_data, filename):
 
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
-from app import db
+
 
 @celery.task(bind=True, name="delete_old_users")
 def delete_old_users(self):
@@ -101,16 +101,18 @@ def delete_old_users(self):
     Delete users older than 1 year.
     """
 
+    session = Session()
+
     try:
         one_year_ago = datetime.utcnow() - timedelta(days=365)
 
         deleted_count = (
-            db.session.query(User)
+            session.query(User)
             .filter(User.created_at < one_year_ago)
             .delete(synchronize_session=False)
         )
 
-        db.session.commit()
+        session.commit()
 
         return {
             "task_id": self.request.id,
@@ -119,10 +121,11 @@ def delete_old_users(self):
         }
 
     except SQLAlchemyError as exc:
-        db.session.rollback()
-
-        # Optional retry
+        session.rollback()
         raise self.retry(exc=exc, countdown=60, max_retries=3)
+
+    finally:
+        session.close()
 
 
 
