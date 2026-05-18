@@ -19,7 +19,15 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           workingDir: /app
-          command: ["celery", "-A", "celery_app.celery", "worker", "--loglevel=info"]
+          command:
+            [
+              "celery",
+              "-A",
+              "celery_app.celery",
+              "worker",
+              "--loglevel=info",
+              "--pidfile=/tmp/celeryworker.pid"
+            ]
           env:
             - name: CELERY_BROKER_URL
               value: {{ .Values.env.CELERY_BROKER_URL | quote }}
@@ -45,22 +53,18 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping | grep pong
+                - test -f /tmp/celeryworker.pid
 
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 30
-            timeoutSeconds: 20
-            failureThreshold: 5
 
           readinessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
-                - celery -A celery_app.celery inspect ping | grep pong
+                - test -f /tmp/celeryworker.pid
 
-            initialDelaySeconds: 60
-            periodSeconds: 60
-            timeoutSeconds: 20
-            failureThreshold: 5
+            initialDelaySeconds: 15
+            periodSeconds: 30
       restartPolicy: Always
