@@ -245,19 +245,7 @@ http://localhost:3000
 
 ## Start MySQL Container
 
-```bash
-docker run --name local-mysql \
-  -e MYSQL_ROOT_PASSWORD=rootpassword \
-  -e MYSQL_DATABASE=flask_app \
-  -e MYSQL_USER=flask_user \
-  -e MYSQL_PASSWORD=flask_password \
-  -p 3306:3306 \
-  mysql:8.0
-```
-
----
-
-## Persistent MySQL Storage
+## Persistent MySQL Storage (Create only first time, ignore if done)
 
 Create Docker volume:
 
@@ -265,7 +253,7 @@ Create Docker volume:
 docker volume create mysql_data
 ```
 
-Run MySQL with persistence:
+## Run MySQL with persistence:
 
 ```bash
 docker run -d \
