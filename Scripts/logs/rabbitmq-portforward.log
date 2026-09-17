@@ -64,3 +64,20 @@ Forwarding from [::1]:15672 -> 15672
 ===== 2026-09-17 11:24:22 =====
 Forwarding from 127.0.0.1:15672 -> 15672
 Forwarding from [::1]:15672 -> 15672
+
+===== 2026-09-17 18:35:53 =====
+Forwarding from 127.0.0.1:15672 -> 15672
+Forwarding from [::1]:15672 -> 15672
+
+===== 2026-09-17 18:43:14 =====
+Unable to listen on port 15672: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:15672: bind: address already in use unable to create listener: Error listen tcp6 [::1]:15672: bind: address already in use]
+error: unable to listen on any of the requested ports: [{15672 15672}]
+error: lost connection to pod
+
+===== 2026-09-17 19:01:59 =====
+Forwarding from 127.0.0.1:15672 -> 15672
+Forwarding from [::1]:15672 -> 15672
+
+===== 2026-09-17 19:23:33 =====
+Unable to listen on port 15672: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:15672: bind: address already in use unable to create listener: Error listen tcp6 [::1]:15672: bind: address already in use]
+error: unable to listen on any of the requested ports: [{15672 15672}]

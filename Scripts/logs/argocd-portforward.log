@@ -101,3 +101,149 @@ Handling connection for 8081
 Handling connection for 8081
 Handling connection for 8081
 Handling connection for 8081
+
+===== 2026-09-17 18:35:53 =====
+Forwarding from 127.0.0.1:8081 -> 8080
+Forwarding from [::1]:8081 -> 8080
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+
+===== 2026-09-17 18:43:14 =====
+Unable to listen on port 8081: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:8081: bind: address already in use unable to create listener: Error listen tcp6 [::1]:8081: bind: address already in use]
+error: unable to listen on any of the requested ports: [{8081 8080}]
+error: lost connection to pod
+
+===== 2026-09-17 19:01:59 =====
+Forwarding from 127.0.0.1:8081 -> 8080
+Forwarding from [::1]:8081 -> 8080
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+E0917 19:23:13.456904    7684 portforward.go:549] "An error occurred forwarding" err="error forwarding port 8080 to pod 4e36dda5c406795d1da97d460004af3fb63b689a2f32a0e43ba94c2ed493ba63, uid : failed to execute portforward in network namespace \"/var/run/netns/cni-5ee3a321-00ef-27c6-817b-83c33924ff32\": failed to connect to localhost:8080 inside namespace \"4e36dda5c406795d1da97d460004af3fb63b689a2f32a0e43ba94c2ed493ba63\", IPv4: dial tcp4 127.0.0.1:8080: connect: connection refused IPv6 dial tcp6 [::1]:8080: connect: connection refused " localPort=8081 remotePort=8080
+error: lost connection to pod
+
+===== 2026-09-17 19:23:33 =====
+Forwarding from 127.0.0.1:8081 -> 8080
+Forwarding from [::1]:8081 -> 8080
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
+Handling connection for 8081
