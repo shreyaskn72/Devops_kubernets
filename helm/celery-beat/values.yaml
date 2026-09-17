@@ -16,6 +16,10 @@ resources:
 env:
   CELERY_BROKER_URL: "amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//"
   CELERY_RESULT_BACKEND: "redis://redis-master.cache.svc.cluster.local:6379/0"
+  DB_HOST: "172.18.0.1" #"host.docker.internal"
+  DB_USER: "flask_user"
+  DB_PASSWORD: "flask_password"
+  DB_NAME: "flask_app"
 
 rabbitmq:
   user: rabbituser

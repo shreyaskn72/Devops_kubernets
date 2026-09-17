@@ -10,7 +10,7 @@ spec:
 
   source:
     repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
-    targetRevision: master
+    targetRevision: vs_code_local/dev_container_setup
     path: helm/react-frontend
 
     helm:
