@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -e
+
+mkdir -p "/home/vscode/.kube"
+mkdir -p "$HOME/.kube"
+
+if ! kubectl cluster-info >/dev/null 2>&1; then
+  kind get clusters | grep -qx dev-cluster || kind create cluster --name dev-cluster
+fi
+
+CLUSTER=$(kind get clusters | head -n1)
+KUBECONFIG_PATH="/home/vscode/.kube/config"
+
+if kind get kubeconfig --name "$CLUSTER" >/dev/null 2>&1; then
+  kind get kubeconfig --name "$CLUSTER" > "$KUBECONFIG_PATH"
+elif [ -f "$HOME/.kube/config" ]; then
+  cp -f "$HOME/.kube/config" "$KUBECONFIG_PATH"
+fi
+
+chown -R vscode:vscode /home/vscode/.kube || true
+export KUBECONFIG="$KUBECONFIG_PATH"
+CONTEXT="kind-$CLUSTER"
+kubectl config use-context "$CONTEXT" || true
+
+chmod +x Scripts/*.sh
+cd Scripts
+
+./start-mysql.sh
+
+# retry start-argocd up to 3 times
+set +e
+try=0
+max=3
+ok=0
+until [ $try -ge $max ]; do
+  ./start-argocd.sh && { ok=1; break; } || {
+    try=$((try+1))
+    echo "start-argocd attempt $try/$max failed"
+    sleep 5
+  }
+done
+set -e
+if [ $ok -ne 1 ]; then
+  echo "start-argocd failed after $max attempts"
+  exit 1
+fi
+
+kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
+
+./start-rabbitmq.sh
+kubectl wait --for=condition=Available deployment --all -n messaging --timeout=300s
+
+if helm status redis -n cache >/dev/null 2>&1; then
+  kubectl wait --for=condition=Ready pods --all -n cache --timeout=300s
+else
+  ./start-redis.sh
+fi
+
+until ./start_frontend_backend_celery_flower.sh; do
+  echo "Application resources are still being created; retrying in 10 seconds..."
+  sleep 10
+done
+
+# stop existing port-forwards
+pkill -f "^kubectl port-forward" || true
+
+# start port-forward-all after 5s in a new terminal-like session
+if command -v tmux >/dev/null 2>&1; then
+  tmux new-session -d -s portforward "sleep 5; ./port-forward-all.sh; bash"
+else
+  nohup bash -lc "sleep 5; ./port-forward-all.sh" >/tmp/port-forward.log 2>&1 &
+fi
