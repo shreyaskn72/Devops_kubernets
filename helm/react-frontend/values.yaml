@@ -26,5 +26,5 @@ resources: {}
 # Leave empty so the browser derives the API's Codespaces forwarded hostname
 # from the frontend hostname (...-3000 -> ...-5000).
 env:
-  REACT_APP_API_URL: ""
+  REACT_APP_API_URL: "https://potential-space-train-65xg9v6prpwcjrw-5000.app.github.dev/"
 
