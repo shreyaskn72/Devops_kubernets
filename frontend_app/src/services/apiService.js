@@ -1,6 +1,10 @@
 import axios from 'axios';
 
 const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.API_URL) {
+    return window.__RUNTIME_CONFIG__.API_URL;
+  }
+
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
