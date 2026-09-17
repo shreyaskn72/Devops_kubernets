@@ -2,6 +2,9 @@
 
 set -e
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
+
 echo "Creating cache namespace..."
 
 kubectl create namespace cache --dry-run=client -o yaml | kubectl apply -f -
@@ -14,9 +17,16 @@ helm repo update
 
 echo "Installing Redis..."
 
-helm install redis bitnami/redis \
+if kubectl get pvc -n cache redis-data-redis-master-0 \
+    -o jsonpath='{.spec.storageClassName}' 2>/dev/null | grep -qx 'hostpath'; then
+    echo "Removing the pending Redis PVC created with the unavailable hostpath StorageClass..."
+    helm uninstall redis -n cache >/dev/null 2>&1 || true
+    kubectl delete pvc redis-data-redis-master-0 -n cache --ignore-not-found=true
+fi
+
+helm upgrade --install redis bitnami/redis \
   -n cache \
-  -f ../helm/values-redis.yaml
+  -f "$REPO_ROOT/helm/values-redis.yaml"
 
 echo "Waiting for Redis pods to become ready..."
 

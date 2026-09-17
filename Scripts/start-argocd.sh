@@ -19,9 +19,14 @@ echo ""
 echo "ArgoCD installation complete."
 echo ""
 
+ARGOCD_USERNAME="admin"
+ARGOCD_PASSWORD="$(kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d)"
+
 echo "Port forward command:"
 echo "kubectl port-forward svc/argocd-server -n argocd 8080:443"
 
 echo ""
-echo "Admin password command:"
-echo "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d"
+echo "ArgoCD login credentials:"
+echo "Username: ${ARGOCD_USERNAME}"
+echo "Password: ${ARGOCD_PASSWORD}"
