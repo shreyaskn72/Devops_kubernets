@@ -23,7 +23,7 @@
     3000,
     5000,
     5555,
-    8080,
+    8081,
     15672
   ],
   "portsAttributes": {
@@ -39,7 +39,7 @@
       "label": "Flower",
       "onAutoForward": "notify"
     },
-    "8080": {
+    "8081": {
       "label": "ArgoCD",
       "onAutoForward": "notify"
     },
