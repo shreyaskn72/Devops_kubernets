@@ -61,12 +61,5 @@ until ./start_frontend_backend_celery_flower.sh; do
   sleep 10
 done
 
-# stop existing port-forwards
-pkill -f "^kubectl port-forward" || true
-
-# start port-forward-all after 5s in a new terminal-like session
-if command -v tmux >/dev/null 2>&1; then
-  tmux new-session -d -s portforward "sleep 5; ./port-forward-all.sh; bash"
-else
-  nohup bash -lc "sleep 5; ./port-forward-all.sh" >/tmp/port-forward.log 2>&1 &
-fi
+# Port-forwarding is started via devcontainer `postStartCommand` to ensure it
+# runs on each container start/reopen. Do not start port-forwards here.

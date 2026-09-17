@@ -58,5 +58,6 @@
       ]
     }
   },
-  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "postStartCommand": "bash -lc \"mkdir -p Scripts/logs && nohup bash Scripts/port-forward-all.sh > Scripts/logs/port-forward.log 2>&1 < /dev/null &\""
 }
