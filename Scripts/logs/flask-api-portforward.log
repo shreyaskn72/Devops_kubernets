@@ -35,3 +35,5 @@ error: unable to listen on any of the requested ports: [{5000 5000}]
 Forwarding from 127.0.0.1:5000 -> 5000
 Forwarding from [::1]:5000 -> 5000
 Handling connection for 5000
+Handling connection for 5000
+error: lost connection to pod

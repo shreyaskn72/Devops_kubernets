@@ -40,3 +40,4 @@ Forwarding from [::1]:15672 -> 15672
 Handling connection for 15672
 Handling connection for 15672
 Handling connection for 15672
+error: lost connection to pod
