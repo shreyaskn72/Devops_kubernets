@@ -10,3 +10,76 @@ Handling connection for 3000
 Handling connection for 3000
 Handling connection for 3000
 Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+error: lost connection to pod
+
+===== 2026-09-17 10:13:26 =====
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+
+===== 2026-09-17 10:28:26 =====
+Unable to listen on port 3000: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:3000: bind: address already in use unable to create listener: Error listen tcp6 [::1]:3000: bind: address already in use]
+error: unable to listen on any of the requested ports: [{3000 3000}]
+
+===== 2026-09-17 10:28:34 =====
+Unable to listen on port 3000: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:3000: bind: address already in use unable to create listener: Error listen tcp6 [::1]:3000: bind: address already in use]
+error: unable to listen on any of the requested ports: [{3000 3000}]
+Handling connection for 3000
+E0917 10:28:40.845003    8057 portforward.go:549] "An error occurred forwarding" err="error forwarding port 3000 to pod 614963d0adf1fb48c55c76f643093acbe5ca16f5269f9c9accb827ce69417d92, uid : failed to find sandbox \"614963d0adf1fb48c55c76f643093acbe5ca16f5269f9c9accb827ce69417d92\" in store: not found" localPort=3000 remotePort=3000
+error: lost connection to pod
+
+===== 2026-09-17 10:30:37 =====
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+
+===== 2026-09-17 10:31:08 =====
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000

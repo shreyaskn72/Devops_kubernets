@@ -4,3 +4,34 @@ Forwarding from 127.0.0.1:5000 -> 5000
 Forwarding from [::1]:5000 -> 5000
 Handling connection for 5000
 Handling connection for 5000
+Handling connection for 5000
+error: lost connection to pod
+
+===== 2026-09-17 10:13:26 =====
+Forwarding from 127.0.0.1:5000 -> 5000
+Forwarding from [::1]:5000 -> 5000
+Handling connection for 5000
+Handling connection for 5000
+Handling connection for 5000
+Handling connection for 5000
+Handling connection for 5000
+Handling connection for 5000
+Handling connection for 5000
+
+===== 2026-09-17 10:28:26 =====
+Unable to listen on port 5000: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:5000: bind: address already in use unable to create listener: Error listen tcp6 [::1]:5000: bind: address already in use]
+error: unable to listen on any of the requested ports: [{5000 5000}]
+
+===== 2026-09-17 10:28:34 =====
+Unable to listen on port 5000: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:5000: bind: address already in use unable to create listener: Error listen tcp6 [::1]:5000: bind: address already in use]
+error: unable to listen on any of the requested ports: [{5000 5000}]
+Handling connection for 5000
+
+===== 2026-09-17 10:30:37 =====
+Unable to listen on port 5000: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:5000: bind: address already in use unable to create listener: Error listen tcp6 [::1]:5000: bind: address already in use]
+error: unable to listen on any of the requested ports: [{5000 5000}]
+
+===== 2026-09-17 10:31:08 =====
+Forwarding from 127.0.0.1:5000 -> 5000
+Forwarding from [::1]:5000 -> 5000
+Handling connection for 5000

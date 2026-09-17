@@ -1,6 +1,25 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const getApiBaseUrl = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  if (typeof window === 'undefined') {
+    return 'http://localhost:5000';
+  }
+
+  const { hostname, protocol } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:5000`;
+  }
+
+  const apiHostname = hostname.replace(/-3000(?=\.|$)/, '-5000');
+
+  return `${protocol}//${apiHostname}`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const apiService = {
   // Home endpoint

@@ -31,8 +31,8 @@ COPY --from=builder /app/build ./build
 # Expose port
 EXPOSE 3000
 
-# Set environment variable for API URL (can be overridden at runtime)
-ENV REACT_APP_API_URL=http://localhost:5000
+# Leave the API URL empty so the frontend derives the Codespaces forwarded URL.
+ENV REACT_APP_API_URL=
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
