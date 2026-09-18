@@ -11,8 +11,8 @@ function App() {
   return (
     <div className="App">
       <div className="container">
-        <h1>🚀 Flask API Frontend</h1>
-        <p className="subtitle">Built with React & Kubernetes</p>
+        <h1>🚀 Flask API Frontend Application</h1>
+        <p className="subtitle">Built with React,flask & Kubernetes</p>
 
         {/* Navigation Tabs */}
         <div className="nav-tabs">
