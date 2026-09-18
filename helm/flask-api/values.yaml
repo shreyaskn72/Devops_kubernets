@@ -22,6 +22,8 @@ ingress:
   tls: []
 
 # Database Configuration
+# For the VS Code devcontainer: Set enabled to false
+# MySQL runs as a Docker container outside the kind cluster.
 # For Option 2 (Local MySQL): Set enabled to false
 # MySQL will NOT be deployed by Helm - use local Docker MySQL instead
 mysql:
@@ -37,16 +39,18 @@ mysql:
       size: 8Gi
 
 # Environment variables for Flask app
+# VS Code devcontainer + kind: reach the Docker-published MySQL port through
+# the kind network gateway.
 # Option 2: Local MySQL running on Docker Desktop
 env:
   - name: DB_HOST
-    value: "host.docker.internal"  # Special hostname for Docker Desktop to connect to localhost
+    value: "172.18.0.1"
   - name: DB_PORT
     value: "3306"
   - name: DB_USER
     value: flask_user
   - name: DB_PASSWORD
-    value: "flask_password"  # Direct password value for local development
+    value: "flask_password"
   - name: DB_NAME
     value: flask_app
 

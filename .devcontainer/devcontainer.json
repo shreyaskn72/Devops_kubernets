@@ -1,0 +1,62 @@
+{
+  "name": "Devops Kubernetes",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "runArgs": [
+    "--network=host"
+  ],
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
+  ],
+  "remoteEnv": {
+    "DOCKER_HOST": "unix:///var/run/docker-host.sock",
+    "KUBECONFIG": "/home/vscode/.kube/config"
+  },
+  "remoteUser": "root",
+  "forwardPorts": [
+    3000,
+    5000,
+    5555,
+    8081,
+    15672
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "React frontend",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Flask API",
+      "onAutoForward": "notify"
+    },
+    "5555": {
+      "label": "Flower",
+      "onAutoForward": "notify"
+    },
+    "8081": {
+      "label": "ArgoCD",
+      "onAutoForward": "notify"
+    },
+    "15672": {
+      "label": "RabbitMQ",
+      "onAutoForward": "notify"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}

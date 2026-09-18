@@ -34,13 +34,13 @@ spec:
             - name: CELERY_RESULT_BACKEND
               value: {{ .Values.env.CELERY_RESULT_BACKEND | quote }}
             - name: DB_HOST
-              value: "host.docker.internal"
+              value: {{ .Values.env.DB_HOST | quote }}
             - name: DB_USER
-              value: "flask_user"
+              value: {{ .Values.env.DB_USER | quote }}
             - name: DB_PASSWORD
-              value: "flask_password"
+              value: {{ .Values.env.DB_PASSWORD | quote }}
             - name: DB_NAME
-              value: "flask_app"
+              value: {{ .Values.env.DB_NAME | quote }}
           resources:
             requests:
               memory: {{ .Values.resources.requests.memory }}
