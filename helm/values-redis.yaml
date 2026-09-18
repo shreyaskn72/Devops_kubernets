@@ -6,7 +6,8 @@ auth:
 master:
   persistence:
     enabled: true
-    storageClass: hostpath
+    storageClass: standard #for codespace
+    #storageClass: hostpath #for local development
     size: 1Gi
 
 resources:

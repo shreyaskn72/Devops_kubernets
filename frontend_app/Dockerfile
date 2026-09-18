@@ -31,12 +31,13 @@ COPY --from=builder /app/build ./build
 # Expose port
 EXPOSE 3000
 
-# Set environment variable for API URL (can be overridden at runtime)
-ENV REACT_APP_API_URL=http://localhost:5000
+# Leave the API URL empty so the frontend derives the Codespaces forwarded URL.
+ENV REACT_APP_API_URL=
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-# Start the app
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Generate runtime configuration so Helm-provided environment variables are
+# available to the browser after the static React build has completed.
+CMD ["sh", "-c", "node -e 'const fs = require(\"fs\"); fs.writeFileSync(\"build/runtime-config.js\", \"window.__RUNTIME_CONFIG__ = \" + JSON.stringify({ API_URL: process.env.REACT_APP_API_URL || \"\" }) + \";\");' && exec serve -s build -l 3000"]
