@@ -1,5 +1,38 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIGMAP_ENV_FILE="$ROOT_DIR/.devcontainer/.env.configmap"
+SECRET_ENV_FILE="$ROOT_DIR/.devcontainer/.env.secret"
+
+for namespace in flask-app celery-worker celery-beat flower frontend-app; do
+  kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f -
+done
+
+if [ ! -f "$CONFIGMAP_ENV_FILE" ]; then
+  echo "Missing ConfigMap env file: $CONFIGMAP_ENV_FILE" >&2
+  exit 1
+fi
+
+for namespace in flask-app celery-worker celery-beat flower frontend-app; do
+  kubectl create configmap app-config \
+    --from-env-file="$CONFIGMAP_ENV_FILE" \
+    -n "$namespace" --dry-run=client -o yaml | kubectl apply -f -
+done
+
+if [ ! -f "$SECRET_ENV_FILE" ]; then
+  echo "Missing Secret env file: $SECRET_ENV_FILE" >&2
+  exit 1
+fi
+
+for namespace in flask-app celery-worker celery-beat flower; do
+  kubectl create secret generic app-secret \
+    --from-env-file="$SECRET_ENV_FILE" \
+    -n "$namespace" --dry-run=client -o yaml | kubectl apply -f -
+done
+
 chmod +x Scripts/*.sh
-cd Scripts
+cd "$ROOT_DIR/Scripts"
 bash ./start-mysql.sh
 
 # retry start-argocd up to 3 times
@@ -34,6 +67,11 @@ fi
 until bash ./start_frontend_backend_celery_flower.sh; do
   echo "Application resources are still being created; retrying in 10 seconds..."
   sleep 10
+done
+
+for namespace in flask-app celery-worker celery-beat flower frontend-app; do
+  kubectl rollout restart deployment --all -n "$namespace"
+  kubectl rollout status deployment --all -n "$namespace" --timeout=300s
 done
 
 
