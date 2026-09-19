@@ -20,10 +20,10 @@ if [ $ok -ne 1 ]; then
   exit 1
 fi
 
-kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
+kubectl wait --for=condition=Available --all deployments -n argocd --timeout=300s
 
 bash ./start-rabbitmq.sh
-kubectl wait --for=condition=Available deployment --all -n messaging --timeout=300s
+kubectl wait --for=condition=Available --all deployments -n messaging --timeout=300s
 
 if helm status redis -n cache >/dev/null 2>&1; then
   kubectl wait --for=condition=Ready pods --all -n cache --timeout=300s
