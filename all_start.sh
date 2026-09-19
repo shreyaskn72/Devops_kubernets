@@ -1,6 +1,6 @@
 chmod +x Scripts/*.sh
 cd Scripts
-./start-mysql.sh
+bash ./start-mysql.sh
 
 # retry start-argocd up to 3 times
 set +e
@@ -8,7 +8,7 @@ try=0
 max=3
 ok=0
 until [ $try -ge $max ]; do
-  ./start-argocd.sh && { ok=1; break; } || {
+  bash ./start-argocd.sh && { ok=1; break; } || {
     try=$((try+1))
     echo "start-argocd attempt $try/$max failed"
     sleep 5
@@ -22,16 +22,16 @@ fi
 
 kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
 
-./start-rabbitmq.sh
+bash ./start-rabbitmq.sh
 kubectl wait --for=condition=Available deployment --all -n messaging --timeout=300s
 
 if helm status redis -n cache >/dev/null 2>&1; then
   kubectl wait --for=condition=Ready pods --all -n cache --timeout=300s
 else
-  ./start-redis.sh
+  bash ./start-redis.sh
 fi
 
-until ./start_frontend_backend_celery_flower.sh; do
+until bash ./start_frontend_backend_celery_flower.sh; do
   echo "Application resources are still being created; retrying in 10 seconds..."
   sleep 10
 done
