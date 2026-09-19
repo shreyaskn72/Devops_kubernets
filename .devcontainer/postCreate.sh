@@ -22,6 +22,23 @@ export KUBECONFIG="$KUBECONFIG_PATH"
 CONTEXT="kind-$CLUSTER"
 kubectl config use-context "$CONTEXT" || true
 
+# Create ConfigMap and Secret from env files for local development
+if [ -f ".devcontainer/.env.configmap" ]; then
+  echo "Creating K8s ConfigMap from .env.configmap..."
+  kubectl create configmap app-config \
+    --from-env-file=.devcontainer/.env.configmap \
+    -n default --dry-run=client -o yaml | kubectl apply -f -
+  echo "ConfigMap 'app-config' created/updated successfully"
+fi
+
+if [ -f ".devcontainer/.env.secret" ]; then
+  echo "Creating K8s Secret from .env.secret..."
+  kubectl create secret generic app-secret \
+    --from-env-file=.devcontainer/.env.secret \
+    -n default --dry-run=client -o yaml | kubectl apply -f -
+  echo "Secret 'app-secret' created/updated successfully"
+fi
+
 chmod +x Scripts/*.sh
 cd Scripts
 
