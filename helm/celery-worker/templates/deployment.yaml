@@ -30,17 +30,17 @@ spec:
             ]
           env:
             - name: CELERY_BROKER_URL
-              value: {{ .Values.env.CELERY_BROKER_URL | quote }}
+              {{- toYaml .Values.env.CELERY_BROKER_URL | nindent 14 }}
             - name: CELERY_RESULT_BACKEND
-              value: {{ .Values.env.CELERY_RESULT_BACKEND | quote }}
+              {{- toYaml .Values.env.CELERY_RESULT_BACKEND | nindent 14 }}
             - name: DB_HOST
-              value: {{ .Values.env.DB_HOST | quote }}
+              {{- toYaml .Values.env.DB_HOST | nindent 14 }}
             - name: DB_USER
-              value: {{ .Values.env.DB_USER | quote }}
+              {{- toYaml .Values.env.DB_USER | nindent 14 }}
             - name: DB_PASSWORD
-              value: {{ .Values.env.DB_PASSWORD | quote }}
+              {{- toYaml .Values.env.DB_PASSWORD | nindent 14 }}
             - name: DB_NAME
-              value: {{ .Values.env.DB_NAME | quote }}
+              {{- toYaml .Values.env.DB_NAME | nindent 14 }}
           resources:
             requests:
               memory: {{ .Values.resources.requests.memory }}
