@@ -327,7 +327,9 @@ def init_db():
     except Exception as e:
         print(f"⚠️ Error initializing database: {e}")
 
+# Initialize database before running the app
+init_db()
+
 if __name__ == "__main__":
-    # Initialize database before running the app
-    init_db()
+
     app.run(host="0.0.0.0", port=5000, debug=False)
