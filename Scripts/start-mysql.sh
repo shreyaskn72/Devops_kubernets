@@ -52,11 +52,22 @@ else
     done
 fi
 
+echo "Ensuring MySQL application user can connect from Docker/Kubernetes..."
+docker exec local-mysql mysql -uroot -prootpassword -e "
+  CREATE USER IF NOT EXISTS 'flask_user'@'localhost' IDENTIFIED BY 'flask_password';
+  CREATE USER IF NOT EXISTS 'flask_user'@'%' IDENTIFIED BY 'flask_password';
+  ALTER USER 'flask_user'@'localhost' IDENTIFIED BY 'flask_password';
+  ALTER USER 'flask_user'@'%' IDENTIFIED BY 'flask_password';
+  GRANT ALL PRIVILEGES ON flask_app.* TO 'flask_user'@'localhost';
+  GRANT ALL PRIVILEGES ON flask_app.* TO 'flask_user'@'%';
+  FLUSH PRIVILEGES;
+"
+
 echo ""
 echo "MySQL connection details:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Host:     localhost"
-echo "Port:     3306"
+echo "Host:     localhost (Docker host)"
+echo "Port:     3307"
 echo "Root:     root / rootpassword"
 echo "Database: flask_app"
 echo "User:     flask_user / flask_password"

@@ -13,6 +13,13 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# Keep local development within Docker Desktop/Codespace memory limits.
+# Production can override these values from its own values file or with --set.
+worker:
+  concurrency: 1
+  maxTasksPerChild: 50
+  pool: prefork
+
 env:
   CELERY_BROKER_URL:
     valueFrom:
@@ -54,4 +61,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-

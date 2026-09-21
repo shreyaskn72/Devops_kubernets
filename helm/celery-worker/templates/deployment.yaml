@@ -26,7 +26,10 @@ spec:
               "celery_app.celery",
               "worker",
               "--loglevel=info",
-              "--pidfile=/tmp/celeryworker.pid"
+              "--pidfile=/tmp/celeryworker.pid",
+              "--concurrency={{ .Values.worker.concurrency }}",
+              "--max-tasks-per-child={{ .Values.worker.maxTasksPerChild }}",
+              "--pool={{ .Values.worker.pool }}"
             ]
           env:
             - name: CELERY_BROKER_URL

@@ -1,21 +1,32 @@
 #!/usr/bin/env bash
 set -e
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+for command_name in docker kind kubectl helm; do
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Required command not found: $command_name" >&2
+    exit 127
+  fi
+done
+
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker is unavailable. Start Docker and rebuild/reopen the dev container." >&2
+  exit 1
+fi
+
 mkdir -p "/home/vscode/.kube"
 mkdir -p "$HOME/.kube"
 
-if ! kubectl cluster-info >/dev/null 2>&1; then
-  kind get clusters | grep -qx dev-cluster || kind create cluster --name dev-cluster
+if ! kind get clusters | grep -qx dev-cluster; then
+  kind create cluster --name dev-cluster
 fi
 
-CLUSTER=$(kind get clusters | head -n1)
+CLUSTER=dev-cluster
 KUBECONFIG_PATH="/home/vscode/.kube/config"
 
-if kind get kubeconfig --name "$CLUSTER" >/dev/null 2>&1; then
-  kind get kubeconfig --name "$CLUSTER" > "$KUBECONFIG_PATH"
-elif [ -f "$HOME/.kube/config" ]; then
-  cp -f "$HOME/.kube/config" "$KUBECONFIG_PATH"
-fi
+kind get kubeconfig --name "$CLUSTER" > "$KUBECONFIG_PATH"
 
 chown -R vscode:vscode /home/vscode/.kube || true
 export KUBECONFIG="$KUBECONFIG_PATH"
@@ -75,11 +86,7 @@ kubectl wait --for=condition=Available --all deployments -n argocd --timeout=300
 bash ./start-rabbitmq.sh
 kubectl wait --for=condition=Available --all deployments -n messaging --timeout=300s
 
-if helm status redis -n cache >/dev/null 2>&1; then
-  kubectl wait --for=condition=Ready pods --all -n cache --timeout=300s
-else
-  bash ./start-redis.sh
-fi
+bash ./start-redis.sh
 
 until bash ./start_frontend_backend_celery_flower.sh; do
   echo "Application resources are still being created; retrying in 10 seconds..."
