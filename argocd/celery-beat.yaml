@@ -8,7 +8,7 @@ spec:
 
   source:
     repoURL: https://github.com/shreyaskn72/Devops_kubernets.git
-    targetRevision: configmaps_secrets
+    targetRevision: windows_stability_dev_container
     path: helm/celery-beat
 
     helm:
