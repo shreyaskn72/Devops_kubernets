@@ -22,7 +22,7 @@ spec:
             - containerPort: {{ .Values.service.targetPort }}
           env:
             - name: REACT_APP_API_URL
-              value: {{ .Values.env.REACT_APP_API_URL | quote }}
+              {{- toYaml .Values.env.REACT_APP_API_URL | nindent 14 }}
           livenessProbe:
             httpGet:
               path: /

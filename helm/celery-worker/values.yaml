@@ -13,13 +13,44 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# Keep local development within Docker Desktop/Codespace memory limits.
+# Production can override these values from its own values file or with --set.
+worker:
+  concurrency: 1
+  maxTasksPerChild: 50
+  pool: prefork
+
 env:
-  CELERY_BROKER_URL: "amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//"
-  CELERY_RESULT_BACKEND: "redis://redis-master.cache.svc.cluster.local:6379/0"
-  DB_HOST: "172.18.0.1" #"host.docker.internal"
-  DB_USER: "flask_user"
-  DB_PASSWORD: "flask_password"
-  DB_NAME: "flask_app"
+  CELERY_BROKER_URL:
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: CELERY_BROKER_URL
+  CELERY_RESULT_BACKEND:
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: CELERY_RESULT_BACKEND
+  DB_HOST:
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: DB_HOST
+  DB_USER:
+    valueFrom:
+      secretKeyRef:
+        name: app-secret
+        key: DB_USER
+  DB_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: app-secret
+        key: DB_PASSWORD
+  DB_NAME:
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: DB_NAME
 
 rabbitmq:
   user: rabbituser
@@ -30,4 +61,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
