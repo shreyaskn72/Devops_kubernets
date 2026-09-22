@@ -39,24 +39,43 @@ mysql:
       size: 8Gi
 
 # Environment variables for Flask app
-# VS Code devcontainer + kind: reach the Docker-published MySQL port through
-# the kind network gateway.
-# Option 2: Local MySQL running on Docker Desktop
+# References K8s ConfigMap 'app-config' and Secret 'app-secret' created from .env files (local dev)
+# or from Doppler (production)
 env:
   - name: DB_HOST
-    value: "172.18.0.1"
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: DB_HOST
   - name: DB_PORT
-    value: "3306"
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: DB_PORT
   - name: DB_USER
-    value: flask_user
+    valueFrom:
+      secretKeyRef:
+        name: app-secret
+        key: DB_USER
   - name: DB_PASSWORD
-    value: "flask_password"
+    valueFrom:
+      secretKeyRef:
+        name: app-secret
+        key: DB_PASSWORD
   - name: DB_NAME
-    value: flask_app
-
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: DB_NAME
   - name: CELERY_BROKER_URL
-    value: "amqp://rabbituser:rabbitpass@rabbitmq.messaging.svc.cluster.local:5672//"
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: CELERY_BROKER_URL
   - name: CELERY_RESULT_BACKEND
-    value: "redis://redis-master.cache.svc.cluster.local:6379/0"
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: CELERY_RESULT_BACKEND
 
 resources: {}

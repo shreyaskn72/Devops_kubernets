@@ -5,6 +5,19 @@ set -e
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 
+# Git Bash does not retain PATH exports from install-helm.sh after it exits.
+HELM_INSTALL_DIR="$HOME/.local/bin"
+case ":$PATH:" in
+    *":$HELM_INSTALL_DIR:"*) ;;
+    *) export PATH="$HELM_INSTALL_DIR:$PATH" ;;
+esac
+
+if ! command -v helm >/dev/null 2>&1; then
+    echo "Helm was not found in PATH."
+    echo "Run ./Scripts/install-helm.sh, then open a new Git Bash window."
+    exit 1
+fi
+
 echo "Creating cache namespace..."
 
 kubectl create namespace cache --dry-run=client -o yaml | kubectl apply -f -
