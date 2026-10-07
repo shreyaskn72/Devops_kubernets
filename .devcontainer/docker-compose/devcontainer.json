@@ -1,0 +1,41 @@
+{
+  "name": "Devops Docker Compose",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "dockerDashComposeVersion": "v2",
+      "installDockerComposeSwitch": false
+    }
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
+  ],
+  "remoteEnv": {
+    "DOCKER_HOST": "unix:///var/run/docker-host.sock"
+  },
+  "remoteUser": "root",
+  "forwardPorts": [
+    3001,
+    5000,
+    5555,
+    15672
+  ],
+  "portsAttributes": {
+    "3001": {
+      "label": "React frontend",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Flask API",
+      "onAutoForward": "notify"
+    },
+    "5555": {
+      "label": "Flower",
+      "onAutoForward": "notify"
+    },
+    "15672": {
+      "label": "RabbitMQ",
+      "onAutoForward": "notify"
+    }
+  }
+}
