@@ -48,5 +48,6 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "docker-compose up --build -d && echo 'Docker Compose services started!'"
+  "postCreateCommand": "docker-compose up --build -d && echo 'Docker Compose services started!'",
+  "postStartCommand": "docker compose up -d"
 }
