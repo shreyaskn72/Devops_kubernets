@@ -15,7 +15,7 @@
   },
   "remoteUser": "root",
   "forwardPorts": [
-    3000,
+    3001,
     5000,
     5555,
     15672,
@@ -23,7 +23,7 @@
     3306
   ],
   "portsAttributes": {
-    "3000": {
+    "3001": {
       "label": "React frontend",
       "onAutoForward": "notify"
     },
