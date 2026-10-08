@@ -86,11 +86,16 @@ services:
   react-frontend:
     build: ./frontend_app
     container_name: react-frontend
-    command: serve -s build -l tcp://0.0.0.0:3000
+    command:
+      - sh
+      - -c
+      - |
+        node -e 'const fs = require("fs"); fs.writeFileSync("build/runtime-config.js", "window.__RUNTIME_CONFIG__ = " + JSON.stringify({ API_URL: process.env.REACT_APP_API_URL || "" }) + ";");' && \
+        exec serve -s build -l tcp://0.0.0.0:3000
     ports:
       - "3001:3000"
     environment:
-      REACT_APP_API_URL: http://flask-api:5000
+      REACT_APP_API_URL: http://localhost:5000
     depends_on:
       - flask-api
     networks:

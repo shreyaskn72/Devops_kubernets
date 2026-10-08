@@ -20,27 +20,40 @@ This Docker Compose configuration mirrors your Kubernetes Helm setup, allowing y
 - Docker & Docker Compose installed
 - Sufficient disk space for volumes
 
+## Use the Docker Compose Dev Container
+
+In VS Code, run **Dev Containers: Reopen in Container** and select **Devops Docker Compose**. This profile provides Docker Compose v2 without creating a Kubernetes cluster or starting the Argo CD setup.
+
+From the repository root, start and stop the stack with:
+
+```bash
+docker compose up -d
+docker compose down
+```
+
+The Kubernetes and Docker Compose profiles share the same Docker daemon and host ports, so stop one environment's services before starting the other.
+
 ## Quick Start
 
 ### 1. Start all services
 ```bash
-cd /Users/shreyas/PycharmProjects/Devops_kubernets_demo
-docker-compose up -d
+cd <repository-root>
+docker compose up -d
 ```
 
 ### 2. Check service status
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### 3. View logs
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f flask-api
-docker-compose logs -f celery-worker
+docker compose logs -f flask-api
+docker compose logs -f celery-worker
 ```
 
 ### 4. Access services
@@ -69,33 +82,33 @@ RabbitMQ:
 
 ### Stop all services
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Stop and remove volumes
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Restart a service
 ```bash
-docker-compose restart flask-api
+docker compose restart flask-api
 ```
 
 ### Rebuild images
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Execute command in service
 ```bash
-docker-compose exec flask-api python manage.py migrate
-docker-compose exec mysql mysql -u flask_user -pflask_password flask_app
+docker compose exec flask-api python manage.py migrate
+docker compose exec mysql mysql -u flask_user -pflask_password flask_app
 ```
 
 ### View service logs
 ```bash
-docker-compose logs -f celery-worker --tail=50
+docker compose logs -f celery-worker --tail=50
 ```
 
 ## Troubleshooting
@@ -108,30 +121,30 @@ lsof -i :3000
 lsof -i :5672
 
 # Force remove containers
-docker-compose down
+docker compose down
 docker system prune -a
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Database connection issues
 ```bash
 # Verify MySQL is healthy
-docker-compose exec mysql mysqladmin ping -h localhost -u flask_user -pflask_password
+docker compose exec mysql mysqladmin ping -h localhost -u flask_user -pflask_password
 
 # Check database exists
-docker-compose exec mysql mysql -u flask_user -pflask_password -e "SHOW DATABASES;"
+docker compose exec mysql mysql -u flask_user -pflask_password -e "SHOW DATABASES;"
 ```
 
 ### Celery Worker not processing tasks
 ```bash
 # Check RabbitMQ connection
-docker-compose logs celery-worker
+docker compose logs celery-worker
 
 # Check Redis connection
-docker-compose exec redis redis-cli ping
+docker compose exec redis redis-cli ping
 
 # Verify Celery can connect to broker
-docker-compose exec celery-worker celery -A app.celery inspect active
+docker compose exec celery-worker celery -A app.celery inspect active
 ```
 
 ### Memory/Resource issues
